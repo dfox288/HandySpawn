@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.0 — 2026-04-18
+
+### New
+- **Server-side component.** Install on both client and server for full features. Vanilla servers fall back to world-spawn-only behaviour (client logs a one-time info message).
+- **Real personal-spawn tracking.** F1 (house icon), F3 (destroyed marker), F6 (cross-dim readout) now show your actual bed/anchor spawn when the server has HandySpawn.
+- **Multiplayer forceload support.** F8 (badge) and F9 (border overlay) work on any server with HandySpawn, not just singleplayer.
+
+### Changed
+- Renamed internal state classes `WorldSpawn*` → `CompassTarget*` for clarity.
+- F7 (world-spawn marker) and F1 (personal spawn marker) are now genuinely distinct on HandySpawn-aware servers.
+- Dropped the "Visible through walls" toggle — F1's depth-tested rendering is the default and only mode.
+- Config string "(singleplayer)" suffix removed from F8/F9 — they now work multiplayer too.
+
+### Known limitations
+- Client-only install still works, but F1/F3/F6 fall back to tracking world spawn (same as 0.1.1) and F8/F9 go silent.
+- Respawn-anchor charge-level visualisation is deferred to a future release.
+- Griefing alerts / spawn-destruction notifications are deferred.
+- Chat messages on spawn set/destroyed are vanilla-only; no localisation overrides.
+
 ## 0.1.1 — 2026-04-18
 
 ### Fixed / clarified

@@ -30,8 +30,6 @@ public final class ConfigScreenFactory {
             .name(Component.translatable("handyspawn.config.category.personal"))
             .option(booleanOption("personalSpawnMarker",
                 () -> cfg.personalSpawnMarker, v -> cfg.personalSpawnMarker = v))
-            .option(booleanOption("personalSpawnThroughWalls",
-                () -> cfg.personalSpawnThroughWalls, v -> cfg.personalSpawnThroughWalls = v))
             .option(booleanOption("sleepReadinessTint",
                 () -> cfg.sleepReadinessTint, v -> cfg.sleepReadinessTint = v))
             .option(booleanOption("destroyedSpawnMarker",

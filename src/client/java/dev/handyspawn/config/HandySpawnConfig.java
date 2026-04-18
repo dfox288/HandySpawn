@@ -21,7 +21,6 @@ public final class HandySpawnConfig {
 
     // --- Personal spawn ---
     @SerialEntry public boolean personalSpawnMarker = true;
-    @SerialEntry public boolean personalSpawnThroughWalls = false;
     @SerialEntry public boolean sleepReadinessTint = true;
     @SerialEntry public boolean destroyedSpawnMarker = true;
 

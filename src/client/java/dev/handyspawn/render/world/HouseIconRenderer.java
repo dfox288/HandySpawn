@@ -52,8 +52,7 @@ public final class HouseIconRenderer {
         if (!dim.equals(ctx.level().dimension())) return;
 
         Vec3 above = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5 + Y_OFFSET, pos.getZ() + 0.5);
-        RenderPrimitives.billboardIcon(ctx, above, SPRITE, ICON_SIZE, ICON_ALPHA,
-            cfg.personalSpawnThroughWalls);
+        RenderPrimitives.billboardIcon(ctx, above, SPRITE, ICON_SIZE, ICON_ALPHA, false);
     }
 
     private HouseIconRenderer() {}
