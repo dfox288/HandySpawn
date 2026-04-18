@@ -10,9 +10,11 @@ import net.minecraft.world.level.ChunkPos;
  * F9 — draws an orange chunk-border wireframe around every chunk currently
  * marked via {@code /forceload add} in the active dimension.
  *
- * <p>Singleplayer / integrated-server only: {@link dev.handyspawn.state.ForceloadState}
- * reaches into the in-process {@code IntegratedServer} to read the authoritative
- * forceload set. On dedicated servers it returns empty and {@link #render} is a no-op.
+ * <p>Data comes from {@link dev.handyspawn.state.SharedForceloadState}, which
+ * is populated by {@link dev.handyspawn.net.ForceloadSyncPayload} broadcasts
+ * from the server. Dimensions the server has not sent an update for simply
+ * resolve to an empty set, so {@link #render} becomes a no-op rather than
+ * needing an explicit availability check.
  *
  * <p>Opt-in via {@code HandySpawnConfig.forceloadBorderOverlay} — off by default
  * because this is a redstone-builder convenience, not something most players want
@@ -26,7 +28,6 @@ public final class ForceloadBorderRenderer {
     public static void render(RenderContext ctx) {
         if (!HandySpawnConfig.get().forceloadBorderOverlay) return;
         if (ctx.level() == null) return;
-        if (!HandySpawn.forceload().isAvailable()) return;
 
         LongSet chunks = HandySpawn.forceload().forceloadedChunks(ctx.level().dimension());
         if (chunks.isEmpty()) return;

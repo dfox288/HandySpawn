@@ -10,9 +10,11 @@ import net.minecraft.world.level.ChunkPos;
 
 /**
  * HUD overlay that places a chunk-grid glyph in the top-right whenever the player is
- * standing inside a {@code /forceload}-loaded chunk. Singleplayer only — the integrated
- * server is queried directly, so on a dedicated server {@link
- * dev.handyspawn.state.ForceloadState#isAvailable()} returns false and the badge hides.
+ * standing inside a {@code /forceload}-loaded chunk. Works against
+ * {@link dev.handyspawn.state.SharedForceloadState}, which is populated from
+ * server broadcasts, so the badge also shows up on dedicated servers provided
+ * they have HandySpawn installed. Dimensions with no sync data simply report an
+ * empty set, so {@code containsChunk} short-circuits to false.
  */
 public final class ForceloadHud {
 
@@ -23,7 +25,6 @@ public final class ForceloadHud {
         if (!HandySpawnConfig.get().forceloadBadge) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || mc.level == null) return;
-        if (!HandySpawn.forceload().isAvailable()) return;
 
         ChunkPos here = ChunkPos.containing(mc.player.blockPosition());
         if (!HandySpawn.forceload().containsChunk(mc.level.dimension(), here)) return;

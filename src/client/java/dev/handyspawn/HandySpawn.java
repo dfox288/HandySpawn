@@ -7,8 +7,8 @@ import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.stats.Stats;
 import dev.handyspawn.config.HandySpawnConfig;
 import dev.handyspawn.state.CompassTargetStateController;
-import dev.handyspawn.state.ForceloadState;
 import dev.handyspawn.state.PhantomTimer;
+import dev.handyspawn.state.SharedForceloadState;
 
 public final class HandySpawn implements ClientModInitializer {
 
@@ -17,7 +17,7 @@ public final class HandySpawn implements ClientModInitializer {
 
     private static CompassTargetStateController compassTargetController;
     private static PhantomTimer phantomTimer;
-    private static final ForceloadState FORCELOAD = new ForceloadState();
+    private static final SharedForceloadState FORCELOAD = new SharedForceloadState();
 
     /**
      * Access the tracked compass-target state. This is the global compass
@@ -34,7 +34,7 @@ public final class HandySpawn implements ClientModInitializer {
         return phantomTimer;
     }
 
-    public static ForceloadState forceload() {
+    public static SharedForceloadState forceload() {
         return FORCELOAD;
     }
 
