@@ -17,17 +17,22 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Optional;
 
-public final class SpawnPersistence {
+/**
+ * Per-world persistence of the tracked world-spawn state. Files are keyed by a
+ * SHA-1 hash of a caller-supplied world identifier so singleplayer save names
+ * and multiplayer server addresses don't collide on disk.
+ */
+public final class WorldSpawnPersistence {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public record Dto(Entry current, Entry destroyed) {}
     public record Entry(int x, int y, int z, String dimension, String kind) {}
-    public record Snapshot(Optional<SpawnRecord> current, Optional<SpawnRecord> destroyed) {}
+    public record Snapshot(Optional<WorldSpawnRecord> current, Optional<WorldSpawnRecord> destroyed) {}
 
     private final Path baseDir;
 
-    public SpawnPersistence(Path baseDir) {
+    public WorldSpawnPersistence(Path baseDir) {
         this.baseDir = baseDir;
     }
 
@@ -39,8 +44,8 @@ public final class SpawnPersistence {
             Dto dto = GSON.fromJson(json, Dto.class);
             if (dto == null) return new Snapshot(Optional.empty(), Optional.empty());
             return new Snapshot(
-                Optional.ofNullable(dto.current()).map(SpawnPersistence::toRecord),
-                Optional.ofNullable(dto.destroyed()).map(SpawnPersistence::toRecord)
+                Optional.ofNullable(dto.current()).map(WorldSpawnPersistence::toRecord),
+                Optional.ofNullable(dto.destroyed()).map(WorldSpawnPersistence::toRecord)
             );
         } catch (IOException | RuntimeException e) {
             return new Snapshot(Optional.empty(), Optional.empty());
@@ -52,8 +57,8 @@ public final class SpawnPersistence {
         try {
             Files.createDirectories(file.getParent());
             Dto dto = new Dto(
-                snap.current().map(SpawnPersistence::toEntry).orElse(null),
-                snap.destroyed().map(SpawnPersistence::toEntry).orElse(null)
+                snap.current().map(WorldSpawnPersistence::toEntry).orElse(null),
+                snap.destroyed().map(WorldSpawnPersistence::toEntry).orElse(null)
             );
             Files.writeString(file, GSON.toJson(dto), StandardCharsets.UTF_8);
         } catch (IOException ignored) {
@@ -75,7 +80,7 @@ public final class SpawnPersistence {
         }
     }
 
-    private static Entry toEntry(SpawnRecord r) {
+    private static Entry toEntry(WorldSpawnRecord r) {
         return new Entry(
             r.pos().getX(), r.pos().getY(), r.pos().getZ(),
             r.dimension().identifier().toString(),
@@ -83,9 +88,9 @@ public final class SpawnPersistence {
         );
     }
 
-    private static SpawnRecord toRecord(Entry e) {
+    private static WorldSpawnRecord toRecord(Entry e) {
         Identifier id = Identifier.parse(e.dimension());
         ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION, id);
-        return SpawnRecord.of(new BlockPos(e.x(), e.y(), e.z()), dim, SpawnKind.valueOf(e.kind()));
+        return WorldSpawnRecord.of(new BlockPos(e.x(), e.y(), e.z()), dim, WorldSpawnKind.valueOf(e.kind()));
     }
 }

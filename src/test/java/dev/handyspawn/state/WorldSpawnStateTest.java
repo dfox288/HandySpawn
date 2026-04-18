@@ -9,30 +9,30 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SpawnStateTest {
+class WorldSpawnStateTest {
 
     private static final ResourceKey<Level> OVERWORLD =
         ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("minecraft", "overworld"));
 
     @Test
     void currentIsEmptyInitially() {
-        SpawnState s = new SpawnState();
+        WorldSpawnState s = new WorldSpawnState();
         assertTrue(s.current().isEmpty());
         assertTrue(s.destroyedAt().isEmpty());
     }
 
     @Test
     void setCurrentStoresRecord() {
-        SpawnState s = new SpawnState();
-        SpawnRecord r = SpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnKind.BED);
+        WorldSpawnState s = new WorldSpawnState();
+        WorldSpawnRecord r = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
         s.setCurrent(r);
         assertEquals(r, s.current().orElseThrow());
     }
 
     @Test
     void clearingCurrentWhilePreviousExistedRecordsDestroyed() {
-        SpawnState s = new SpawnState();
-        SpawnRecord old = SpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnKind.BED);
+        WorldSpawnState s = new WorldSpawnState();
+        WorldSpawnRecord old = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
         s.setCurrent(old);
         s.clearCurrent();
         assertTrue(s.current().isEmpty());
@@ -41,9 +41,9 @@ class SpawnStateTest {
 
     @Test
     void newSpawnClearsDestroyed() {
-        SpawnState s = new SpawnState();
-        SpawnRecord old = SpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnKind.BED);
-        SpawnRecord fresh = SpawnRecord.of(new BlockPos(5, 64, 7), OVERWORLD, SpawnKind.BED);
+        WorldSpawnState s = new WorldSpawnState();
+        WorldSpawnRecord old = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
+        WorldSpawnRecord fresh = WorldSpawnRecord.of(new BlockPos(5, 64, 7), OVERWORLD, WorldSpawnKind.BED);
         s.setCurrent(old);
         s.clearCurrent();
         s.setCurrent(fresh);
@@ -53,8 +53,8 @@ class SpawnStateTest {
 
     @Test
     void settingIdenticalRecordDoesNotCreateDestroyedMarker() {
-        SpawnState s = new SpawnState();
-        SpawnRecord r = SpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnKind.BED);
+        WorldSpawnState s = new WorldSpawnState();
+        WorldSpawnRecord r = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
         s.setCurrent(r);
         s.setCurrent(r);
         assertTrue(s.destroyedAt().isEmpty());

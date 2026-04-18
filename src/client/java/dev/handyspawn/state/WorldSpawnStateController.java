@@ -13,33 +13,42 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.storage.LevelData;
 
 import java.nio.file.Path;
 
 /**
- * Glue between Minecraft's runtime events and {@link SpawnState} / {@link SpawnPersistence}.
+ * Glue between Minecraft's runtime events and {@link WorldSpawnState} /
+ * {@link WorldSpawnPersistence}.
  *
- * <p>On join the controller resolves a stable per-world identifier (singleplayer save name or
- * multiplayer server address), reads any persisted snapshot and restores in-memory state.
- * On disconnect it flushes state to disk. Every client tick it diffs the client level's
- * respawn data against the stored record and persists any changes. When a chunk containing the
- * stored spawn loads, it verifies the underlying block still matches the recorded kind and
- * moves the record to the destroyed slot otherwise.
+ * <p>The data source is {@code ClientLevel.getRespawnData()}, which stores the
+ * last {@link net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket}
+ * received from the server. In MC 26.1.2 that packet is sent only by
+ * {@code MinecraftServer.setRespawnData} (on login and on {@code /setworldspawn})
+ * and broadcast to every connected player — so this is the world spawn, not a
+ * per-player bed or respawn anchor. Personal respawn is stored server-side on
+ * {@code ServerPlayer.respawnConfig} and is not synced to the client.
+ *
+ * <p>On join the controller resolves a stable per-world identifier (singleplayer
+ * save name or multiplayer server address), reads any persisted snapshot and
+ * restores in-memory state. On disconnect it flushes state to disk. Every client
+ * tick it diffs the client level's respawn data against the stored record and
+ * persists any changes. When a chunk containing the stored spawn loads, it
+ * verifies the underlying block still matches the recorded kind and moves the
+ * record to the destroyed slot otherwise.
  */
-public final class SpawnStateController {
+public final class WorldSpawnStateController {
 
-    private final SpawnState state;
-    private final SpawnPersistence persistence;
+    private final WorldSpawnState state;
+    private final WorldSpawnPersistence persistence;
     private String currentWorldId;
 
-    public SpawnStateController(Path storageDir) {
-        this.state = new SpawnState();
-        this.persistence = new SpawnPersistence(storageDir);
+    public WorldSpawnStateController(Path storageDir) {
+        this.state = new WorldSpawnState();
+        this.persistence = new WorldSpawnPersistence(storageDir);
     }
 
-    public SpawnState state() {
+    public WorldSpawnState state() {
         return state;
     }
 
@@ -52,8 +61,8 @@ public final class SpawnStateController {
 
     private void loadForCurrentWorld(Minecraft client) {
         currentWorldId = resolveWorldId(client);
-        SpawnPersistence.Snapshot snap = persistence.read(currentWorldId);
-        // SpawnState enforces mutual exclusion: current and destroyed are never both populated.
+        WorldSpawnPersistence.Snapshot snap = persistence.read(currentWorldId);
+        // WorldSpawnState enforces mutual exclusion: current and destroyed are never both populated.
         if (snap.current().isPresent()) {
             state.setCurrent(snap.current().get());
         } else if (snap.destroyed().isPresent()) {
@@ -81,21 +90,21 @@ public final class SpawnStateController {
 
         BlockPos spawnPos = respawn.pos();
         ResourceKey<Level> spawnDim = respawn.dimension();
-        SpawnKind kind = inferKindFromBlock(client, spawnPos, spawnDim);
-        SpawnRecord fresh = SpawnRecord.of(spawnPos, spawnDim, kind);
+        WorldSpawnKind kind = inferKindFromBlock(client, spawnPos, spawnDim);
+        WorldSpawnRecord fresh = WorldSpawnRecord.of(spawnPos, spawnDim, kind);
         if (state.current().map(cur -> !cur.equals(fresh)).orElse(true)) {
             state.setCurrent(fresh);
             save();
         }
     }
 
-    private SpawnKind inferKindFromBlock(Minecraft client, BlockPos pos, ResourceKey<Level> dim) {
+    private WorldSpawnKind inferKindFromBlock(Minecraft client, BlockPos pos, ResourceKey<Level> dim) {
         if (client.level != null && client.level.dimension().equals(dim)) {
             var block = client.level.getBlockState(pos).getBlock();
-            if (block instanceof RespawnAnchorBlock) return SpawnKind.RESPAWN_ANCHOR;
-            if (block instanceof BedBlock) return SpawnKind.BED;
+            if (block instanceof RespawnAnchorBlock) return WorldSpawnKind.RESPAWN_ANCHOR;
+            if (block instanceof BedBlock) return WorldSpawnKind.BED;
         }
-        return state.current().map(SpawnRecord::kind).orElse(SpawnKind.BED);
+        return state.current().map(WorldSpawnRecord::kind).orElse(WorldSpawnKind.BED);
     }
 
     private void verifyDestroyedOnChunkLoad(ClientLevel world, ChunkPos cp) {
@@ -116,7 +125,7 @@ public final class SpawnStateController {
 
     private void save() {
         if (currentWorldId == null) return;
-        persistence.write(currentWorldId, new SpawnPersistence.Snapshot(
+        persistence.write(currentWorldId, new WorldSpawnPersistence.Snapshot(
             state.current(), state.destroyedAt()));
     }
 
