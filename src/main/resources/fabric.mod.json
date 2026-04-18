@@ -25,7 +25,8 @@
         ]
     },
     "mixins": [
-        { "config": "handyspawn.client.mixins.json", "environment": "client" }
+        { "config": "handyspawn.client.mixins.json", "environment": "client" },
+        "handyspawn.main.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=0.19.2",
