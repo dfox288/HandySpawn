@@ -1,0 +1,37 @@
+{
+    "schemaVersion": 1,
+    "id": "handyspawn",
+    "version": "${version}",
+    "name": "HandySpawn",
+    "description": "Surfaces Minecraft's hidden spawn-related information.",
+    "authors": ["D.Fox"],
+    "contact": {
+        "homepage": "https://github.com/dfox288/HandySpawn",
+        "sources": "https://github.com/dfox288/HandySpawn",
+        "issues": "https://github.com/dfox288/HandySpawn/issues"
+    },
+    "license": "MIT",
+    "icon": "assets/handyspawn/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "client": [
+            "dev.handyspawn.HandySpawn"
+        ],
+        "modmenu": [
+            "dev.handyspawn.compat.ModMenuIntegration"
+        ]
+    },
+    "mixins": [
+        { "config": "handyspawn.client.mixins.json", "environment": "client" }
+    ],
+    "depends": {
+        "fabricloader": ">=0.19.2",
+        "minecraft": ">=26.1-pre.1",
+        "java": ">=25",
+        "fabric-api": "*"
+    },
+    "suggests": {
+        "yet_another_config_lib_v3": "*",
+        "modmenu": "*"
+    }
+}
