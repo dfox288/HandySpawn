@@ -21,7 +21,12 @@ import net.minecraft.client.Minecraft;
 public final class WorldRenderer {
 
     public static void register() {
-        LevelRenderEvents.BEFORE_GIZMOS.register(fabricCtx -> {
+        // COLLECT_SUBMITS is the phase during which BlockEntityRenderers and
+        // other submit-based content queue their draws (see HandyBookshelf's
+        // ChiseledBookshelfRenderer for the proven pattern). Firing later —
+        // e.g. AFTER_TRANSLUCENT_TERRAIN or BEFORE_GIZMOS — lands after the
+        // collector has already been drained, so nothing renders.
+        LevelRenderEvents.COLLECT_SUBMITS.register(fabricCtx -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null) return;
             RenderContext ctx = new RenderContext(

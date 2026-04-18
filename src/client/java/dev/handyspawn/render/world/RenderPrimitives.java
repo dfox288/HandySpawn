@@ -96,15 +96,17 @@ public final class RenderPrimitives {
             // owns its Font reference.
             int a = clamp8(Math.round(alpha * 255.0f));
             int argb = (a << 24) | (rgb24 & 0x00FFFFFF);
+            // POLYGON_OFFSET matches vanilla text_display entities — renders on
+            // top of translucent geometry without depth-test disable.
+            // SEE_THROUGH for through-walls ghost markers.
             Font.DisplayMode mode = throughWalls
                 ? Font.DisplayMode.SEE_THROUGH
-                : Font.DisplayMode.NORMAL;
-            // Compute the x centring against the local Font instance for width
-            // measurement — the collector uses its own Font at draw time but the
-            // width is stable so this is safe.
+                : Font.DisplayMode.POLYGON_OFFSET;
             float textX = -net.minecraft.client.Minecraft.getInstance().font.width(fcs) / 2f;
             final int LIGHT_FULL = 0xF000F0;
-            ctx.collector().submitText(
+            // order(2) mirrors HandyBookshelf's name-tag draw — a stable
+            // "after geometry, before HUD" layer in the collector's order list.
+            ctx.collector().order(2).submitText(
                 ps,
                 textX,
                 0f,
