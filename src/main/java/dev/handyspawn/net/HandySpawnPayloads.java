@@ -16,12 +16,18 @@ public final class HandySpawnPayloads {
 
     private HandySpawnPayloads() {}
 
+    private static boolean registered;
+
     /**
-     * Registers all three S2C payload types.
+     * Registers all three S2C payload types. Idempotent — in singleplayer both
+     * the server and client initializers invoke this in the same JVM, so
+     * duplicate calls must be no-ops rather than throwing.
      */
-    public static void registerAll() {
+    public static synchronized void registerAll() {
+        if (registered) return;
         PayloadTypeRegistry.clientboundPlay().register(HandshakePayload.ID, HandshakePayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(PersonalSpawnPayload.ID, PersonalSpawnPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ForceloadSyncPayload.ID, ForceloadSyncPayload.CODEC);
+        registered = true;
     }
 }
