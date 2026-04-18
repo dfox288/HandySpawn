@@ -28,11 +28,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class WorldSpawnRenderer {
 
-    /**
-     * Compass glyph (U+2316 POSITION INDICATOR). Distinct from the HOUSE glyph
-     * used for personal spawn so the two can coexist without confusion.
-     */
-    private static final String GLYPH = "\u2316";
+    /** ASCII label for world spawn — default font lacks U+2316. */
+    private static final String GLYPH = "SPAWN";
 
     /** Muted gold, reads as "landmark". */
     private static final int COLOR_RGB = 0xFFE080;

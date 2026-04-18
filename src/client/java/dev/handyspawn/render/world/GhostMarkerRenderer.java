@@ -20,8 +20,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class GhostMarkerRenderer {
 
-    /** Same HOUSE glyph as {@link HouseIconRenderer} but red-tinted for "gone". */
-    private static final String GLYPH = "\u2302";
+    /** ASCII fallback for destroyed spawn — default font lacks U+2302. */
+    private static final String GLYPH = "GONE";
 
     /** Dusky red; the alpha channel handles the ghostly transparency. */
     private static final int COLOR_RGB = 0xFF5555;

@@ -18,12 +18,13 @@ import net.minecraft.world.phys.Vec3;
 public final class HouseIconRenderer {
 
     /**
-     * Unicode "HOUSE" (U+2302) — used in lieu of a sprite because {@link
+     * Plain ASCII label — used in lieu of a sprite because {@link
      * RenderPrimitives#billboardGlyph} is the working billboard path in
-     * MC 26.1.2 under our injection point. A sprite-based path is tracked as
-     * a polish task.
+     * MC 26.1.2 under our injection point. The vanilla default font does
+     * not ship U+2302 (HOUSE) glyph coverage, so we use a readable word.
+     * A sprite-based path is tracked as a polish task.
      */
-    private static final String GLYPH = "\u2302";
+    private static final String GLYPH = "HOME";
 
     /** Warm off-white, reads as "alive / active" next to the ghost marker's red. */
     private static final int COLOR_RGB = 0xFFF0C8;
