@@ -56,7 +56,10 @@ public final class RenderPrimitives {
             ps.mulPose(ctx.camera().rotation());
 
             // TODO(polish): real through-walls support needs a depth-test-off variant.
-            RenderType layer = RenderTypes.text(sprite);
+            // entityTranslucent is a 3D world-space render type; RenderTypes.text was designed
+            // for the 2D HUD pipeline and its shader doesn't project world-space coords correctly
+            // (the icon appeared screen-locked and drifted when the camera turned).
+            RenderType layer = RenderTypes.entityTranslucent(sprite);
             VertexConsumer vc = ctx.buffers().getBuffer(layer);
 
             int a = clamp8(Math.round(alpha * 255.0f));
@@ -73,10 +76,12 @@ public final class RenderPrimitives {
             // damage/hurt tint.
             final int LIGHT_FULL = 0xF000F0;
             final int NO_OVERLAY = 0x00F000F0;
-            vc.addVertex(pose, -h, -h, 0f).setColor(r, g, b, a).setUv(0f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
-            vc.addVertex(pose,  h, -h, 0f).setColor(r, g, b, a).setUv(1f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
-            vc.addVertex(pose,  h,  h, 0f).setColor(r, g, b, a).setUv(1f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
-            vc.addVertex(pose, -h,  h, 0f).setColor(r, g, b, a).setUv(0f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
+            // entityTranslucent expects a full vertex: pos + color + uv + overlay + light + normal.
+            // Normal points at +Z (toward the camera post-billboard rotation).
+            vc.addVertex(pose, -h, -h, 0f).setColor(r, g, b, a).setUv(0f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
+            vc.addVertex(pose,  h, -h, 0f).setColor(r, g, b, a).setUv(1f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
+            vc.addVertex(pose,  h,  h, 0f).setColor(r, g, b, a).setUv(1f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
+            vc.addVertex(pose, -h,  h, 0f).setColor(r, g, b, a).setUv(0f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
         } finally {
             ps.popPose();
         }

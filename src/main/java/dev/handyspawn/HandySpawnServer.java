@@ -65,10 +65,11 @@ public final class HandySpawnServer implements ModInitializer {
             if (!isBed && !isAnchor) return;
             if (!(world instanceof ServerLevel serverLevel)) return;
 
+            // Can't just compare broken pos == spawn pos: a bed has two halves
+            // (head + foot) and vanilla records spawn at the head. Breaking
+            // either half destroys both, so we need to verify each player's
+            // spawn block is still a valid bed/anchor after the break.
             ResourceKey<Level> worldKey = serverLevel.dimension();
-            PersonalSpawnKind kind = isAnchor
-                ? PersonalSpawnKind.RESPAWN_ANCHOR
-                : PersonalSpawnKind.BED;
 
             for (ServerPlayer p : serverLevel.getServer().getPlayerList().getPlayers()) {
                 ServerPlayer.RespawnConfig rc = p.getRespawnConfig();
@@ -78,8 +79,19 @@ public final class HandySpawnServer implements ModInitializer {
                 BlockPos spawnPos = data.pos();
                 ResourceKey<Level> spawnDim = data.dimension();
                 if (!worldKey.equals(spawnDim)) continue;
-                if (!spawnPos.equals(pos)) continue;
 
+                // Re-check the block at the player's spawn coords against the
+                // post-break world state. If the bed/anchor is gone (either
+                // because this break was it, or its other half was broken
+                // previously), the player's spawn is destroyed.
+                var currentBlock = serverLevel.getBlockState(spawnPos).getBlock();
+                boolean stillValid = (currentBlock instanceof BedBlock)
+                                  || (currentBlock instanceof RespawnAnchorBlock);
+                if (stillValid) continue;
+
+                PersonalSpawnKind kind = (currentBlock == null)
+                    ? PersonalSpawnKind.BED // old kind lost; heuristic default
+                    : (isAnchor ? PersonalSpawnKind.RESPAWN_ANCHOR : PersonalSpawnKind.BED);
                 SpawnBroadcaster.broadcastDestroyed(p, spawnPos, spawnDim, kind);
                 // Pass null to clear; vanilla's setRespawnPosition treats a
                 // null config as a clear (and the false flag suppresses the
