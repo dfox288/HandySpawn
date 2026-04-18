@@ -1,8 +1,12 @@
 package dev.handyspawn.render.hud;
 
+import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
+import dev.handyspawn.state.CompassTargetRecord;
+import dev.handyspawn.state.PersonalSpawnState;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -31,7 +35,30 @@ public final class HudRenderer {
                 ThunderHud.render(ctx);
                 CrossDimHud.render(ctx);
                 ForceloadHud.render(ctx);
+                // DEBUG: big status banner so we can verify server→client state
+                // even if world-space rendering stays silent. Remove once world
+                // rendering is proven visible.
+                renderDebugStatus(ctx);
             });
+    }
+
+    private static void renderDebugStatus(net.minecraft.client.gui.GuiGraphicsExtractor ctx) {
+        StringBuilder sb = new StringBuilder("HS ");
+        sb.append(HandySpawn.session().isServerSynced() ? "SYNCED " : "LOCAL ");
+
+        PersonalSpawnState ps = HandySpawn.personal();
+        if (ps != null) {
+            ps.current().ifPresent(r ->
+                sb.append("| bed@").append(r.pos().getX()).append(",").append(r.pos().getY()).append(",").append(r.pos().getZ()).append(" "));
+            ps.destroyedAt().ifPresent(r ->
+                sb.append("| GONE@").append(r.pos().getX()).append(",").append(r.pos().getY()).append(",").append(r.pos().getZ()).append(" "));
+        }
+        CompassTargetRecord compass = HandySpawn.compassTarget() != null
+            ? HandySpawn.compassTarget().state().current().orElse(null) : null;
+        if (compass != null) {
+            sb.append("| world@").append(compass.pos().getX()).append(",").append(compass.pos().getY()).append(",").append(compass.pos().getZ());
+        }
+        HudPrimitives.drawTextAt(ctx, Component.literal(sb.toString()), 4, 4, 0xFFFFFF00);
     }
 
     private HudRenderer() {}

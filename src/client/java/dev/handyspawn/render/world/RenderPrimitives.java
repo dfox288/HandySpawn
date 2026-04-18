@@ -216,8 +216,10 @@ public final class RenderPrimitives {
                              float x2, float y2, float z2,
                              float r, float g, float b, float a,
                              float nx, float ny, float nz) {
-        vc.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
-        vc.addVertex(pose, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
+        // MC 26.1 lines vertex format requires setLineWidth; omitting it
+        // crashes at end-of-vertex with "Missing elements in vertex: LineWidth".
+        vc.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz).setLineWidth(4f);
+        vc.addVertex(pose, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz).setLineWidth(4f);
     }
 
     private static int clamp8(int v) {

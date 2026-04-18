@@ -60,6 +60,9 @@ public final class HouseIconRenderer {
 
         Vec3 above = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5 + Y_OFFSET, pos.getZ() + 0.5);
         RenderPrimitives.billboardGlyph(ctx, above, GLYPH, ICON_SIZE, COLOR_RGB, ICON_ALPHA, false);
+        // DEBUG: magenta chunk wireframe around the personal-spawn chunk so we can
+        // see SOMETHING in world space even if text rendering keeps failing.
+        RenderPrimitives.chunkWireframe(ctx, pos.getX() >> 4, pos.getZ() >> 4, 0xFFFF00FF);
     }
 
     private HouseIconRenderer() {}
