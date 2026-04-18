@@ -110,12 +110,6 @@ public final class RenderPrimitives {
                 mode,
                 0,
                 0xF000F0);
-            // @At("RETURN") on renderLevel fires AFTER vanilla has ended its
-            // buffer batches — our vertices sit in a dormant buffer unless we
-            // flush. BufferSource.endLastBatch() drains the pending buffer.
-            if (ctx.buffers() instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource bs) {
-                bs.endLastBatch();
-            }
         } finally {
             ps.popPose();
         }

@@ -127,9 +127,10 @@ public final class HandySpawn implements ClientModInitializer {
             phantomTimer.updateFromStats(value);
         });
 
-        // World-space rendering is wired via LevelRendererMixin (see
-        // dev.handyspawn.mixin.LevelRendererMixin) — no explicit registration needed here.
-
+        // World-space rendering uses Fabric's LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN
+        // so our vertices land inside vanilla's live render pass (PoseStack with
+        // view matrix applied, BufferSource accepting vertices, batches not yet ended).
+        dev.handyspawn.render.world.WorldRenderer.register();
         dev.handyspawn.render.hud.HudRenderer.register();
     }
 }
