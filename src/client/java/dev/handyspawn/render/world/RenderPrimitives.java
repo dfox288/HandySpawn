@@ -68,10 +68,15 @@ public final class RenderPrimitives {
             //   (-h,-h) -- ( h,-h)
             //   (-h, h) -- ( h, h)
             // Wound CCW when viewed from +Z (post-billboard: toward the camera).
-            vc.addVertex(pose, -h, -h, 0f).setColor(r, g, b, a).setUv(0f, 1f);
-            vc.addVertex(pose,  h, -h, 0f).setColor(r, g, b, a).setUv(1f, 1f);
-            vc.addVertex(pose,  h,  h, 0f).setColor(r, g, b, a).setUv(1f, 0f);
-            vc.addVertex(pose, -h,  h, 0f).setColor(r, g, b, a).setUv(0f, 0f);
+            // Full-bright lightmap (15/15 block/sky) so the icon renders at consistent
+            // brightness regardless of ambient lighting. NO_OVERLAY disables entity
+            // damage/hurt tint.
+            final int LIGHT_FULL = 0xF000F0;
+            final int NO_OVERLAY = 0x00F000F0;
+            vc.addVertex(pose, -h, -h, 0f).setColor(r, g, b, a).setUv(0f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
+            vc.addVertex(pose,  h, -h, 0f).setColor(r, g, b, a).setUv(1f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
+            vc.addVertex(pose,  h,  h, 0f).setColor(r, g, b, a).setUv(1f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
+            vc.addVertex(pose, -h,  h, 0f).setColor(r, g, b, a).setUv(0f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL);
         } finally {
             ps.popPose();
         }
@@ -155,10 +160,11 @@ public final class RenderPrimitives {
             PoseStack.Pose pose = ps.last();
 
             // 1x1 quad on XZ plane at y=0, CCW from above.
-            vc.addVertex(pose, 0f, 0f, 0f).setColor(r, g, b, a);
-            vc.addVertex(pose, 0f, 0f, 1f).setColor(r, g, b, a);
-            vc.addVertex(pose, 1f, 0f, 1f).setColor(r, g, b, a);
-            vc.addVertex(pose, 1f, 0f, 0f).setColor(r, g, b, a);
+            // Normal points up (+Y) — debugFilledBox needs a normal vector.
+            vc.addVertex(pose, 0f, 0f, 0f).setColor(r, g, b, a).setNormal(pose, 0f, 1f, 0f);
+            vc.addVertex(pose, 0f, 0f, 1f).setColor(r, g, b, a).setNormal(pose, 0f, 1f, 0f);
+            vc.addVertex(pose, 1f, 0f, 1f).setColor(r, g, b, a).setNormal(pose, 0f, 1f, 0f);
+            vc.addVertex(pose, 1f, 0f, 0f).setColor(r, g, b, a).setNormal(pose, 0f, 1f, 0f);
         } finally {
             ps.popPose();
         }
