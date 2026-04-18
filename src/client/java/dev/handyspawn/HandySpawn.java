@@ -53,6 +53,7 @@ public final class HandySpawn implements ClientModInitializer {
             phantomTimer.updateFromStats(value);
         });
 
-        dev.handyspawn.render.world.WorldRenderer.register();
+        // World-space rendering is wired via LevelRendererMixin (see
+        // dev.handyspawn.mixin.LevelRendererMixin) — no explicit registration needed here.
     }
 }
