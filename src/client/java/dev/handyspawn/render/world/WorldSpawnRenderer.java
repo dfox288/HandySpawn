@@ -55,6 +55,12 @@ public final class WorldSpawnRenderer {
         BlockPos spawn = rec.pos();
         Vec3 above = new Vec3(spawn.getX() + 0.5, spawn.getY() + 0.5 + Y_OFFSET, spawn.getZ() + 0.5);
         RenderPrimitives.billboardGlyph(ctx, above, GLYPH, ICON_SIZE, COLOR_RGB, ICON_ALPHA, false);
+        // DEBUG: also outline the spawn chunk in bright cyan so we can tell if
+        // lines render when font doesn't. This distinguishes pipeline failure
+        // from a Font-specific issue.
+        int chunkX = spawn.getX() >> 4;
+        int chunkZ = spawn.getZ() >> 4;
+        RenderPrimitives.chunkWireframe(ctx, chunkX, chunkZ, 0xFF00FFFF);
     }
 
     private WorldSpawnRenderer() {}

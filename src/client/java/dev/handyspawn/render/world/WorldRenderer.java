@@ -21,7 +21,7 @@ import net.minecraft.client.Minecraft;
 public final class WorldRenderer {
 
     public static void register() {
-        LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(fabricCtx -> {
+        LevelRenderEvents.BEFORE_GIZMOS.register(fabricCtx -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null) return;
             RenderContext ctx = new RenderContext(
