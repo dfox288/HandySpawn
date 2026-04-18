@@ -22,6 +22,7 @@ loom {
 }
 
 repositories {
+	mavenCentral()
 	maven { url = "https://maven.terraformersmc.com/" }
 	maven { url = "https://api.modrinth.com/maven" }
 }
@@ -42,6 +43,13 @@ dependencies {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
 	localRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+	useJUnitPlatform()
 }
 
 processResources {
