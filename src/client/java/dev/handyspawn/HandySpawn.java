@@ -52,5 +52,7 @@ public final class HandySpawn implements ClientModInitializer {
             int value = client.player.getStats().getValue(Stats.CUSTOM, Stats.TIME_SINCE_REST);
             phantomTimer.updateFromStats(value);
         });
+
+        dev.handyspawn.render.world.WorldRenderer.register();
     }
 }
