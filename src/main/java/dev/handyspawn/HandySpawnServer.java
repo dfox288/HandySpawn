@@ -1,9 +1,11 @@
 package dev.handyspawn;
 
+import dev.handyspawn.net.ForceloadSyncPayload;
 import dev.handyspawn.net.HandshakePayload;
 import dev.handyspawn.net.HandySpawnPayloads;
 import dev.handyspawn.net.PersonalSpawnKind;
 import dev.handyspawn.server.SpawnBroadcaster;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -41,6 +43,15 @@ public final class HandySpawnServer implements ModInitializer {
             ServerPlayer player = handler.player;
             ServerPlayNetworking.send(player, HandshakePayload.INSTANCE);
             SpawnBroadcaster.broadcastPersonalSpawn(player);
+
+            // Seed the fresh client with per-dimension forceload snapshots so
+            // markers are accurate before the first mutation arrives. Empty
+            // sets are skipped - the client treats an absent entry as "none".
+            for (ServerLevel lvl : server.getAllLevels()) {
+                long[] arr = lvl.getForceLoadedChunks().toLongArray();
+                if (arr.length == 0) continue;
+                ServerPlayNetworking.send(player, new ForceloadSyncPayload(lvl.dimension(), arr));
+            }
         });
 
         // When a bed or respawn anchor is destroyed, any player whose personal
@@ -76,5 +87,25 @@ public final class HandySpawnServer implements ModInitializer {
                 p.setRespawnPosition(null, false);
             }
         });
+    }
+
+    /**
+     * Broadcasts the current full force-loaded chunk set for {@code level} to
+     * every player currently in that dimension.
+     * <p>
+     * Called from {@code ServerLevelForceloadMixin} at the tail of
+     * {@code setChunkForced}, so the snapshot reflects the post-mutation
+     * state. Sending full snapshots (rather than per-chunk deltas) keeps the
+     * client state trivially correct after any reorder or dropped packet and
+     * costs at most {@code 8 * N} bytes per change, which is negligible for
+     * realistic forceload set sizes.
+     */
+    public static void onForceloadChanged(ServerLevel level) {
+        LongSet chunks = level.getForceLoadedChunks();
+        long[] arr = chunks.toLongArray();
+        ForceloadSyncPayload payload = new ForceloadSyncPayload(level.dimension(), arr);
+        for (ServerPlayer player : level.players()) {
+            ServerPlayNetworking.send(player, payload);
+        }
     }
 }
