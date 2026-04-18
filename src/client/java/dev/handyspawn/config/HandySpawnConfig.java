@@ -53,5 +53,5 @@ public final class HandySpawnConfig {
         return HANDLER;
     }
 
-    private HandySpawnConfig() {}
+    public HandySpawnConfig() {}
 }
