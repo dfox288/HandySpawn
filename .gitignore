@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+gradle.properties.local
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Minecraft run directory
+run/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fabric
+remappedSrc/
+
+# Claude
+.claude/
+
+# Scratch notes (not committed)
+NOTES.md
