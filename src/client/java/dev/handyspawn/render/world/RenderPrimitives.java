@@ -2,14 +2,13 @@ package dev.handyspawn.render.world;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 
 /**
  * Three world-space rendering primitives shared by the per-feature renderers.
@@ -65,7 +64,6 @@ public final class RenderPrimitives {
                                       int rgb24,
                                       float alpha,
                                       boolean throughWalls) {
-        Font font = Minecraft.getInstance().font;
         PoseStack ps = ctx.poseStack();
         Vec3 cam = ctx.camera().position();
 
@@ -75,41 +73,49 @@ public final class RenderPrimitives {
                 glyph, pos, cam, throughWalls ? "SEE_THROUGH" : "NORMAL");
         }
 
+        // Rendering idiom borrowed from sibling mod HandyBookshelf's
+        // ChiseledBookshelfRenderer.submit() (name-tag branch): translate to
+        // camera-relative world offset, apply camera rotation for billboard,
+        // scale to vanilla name-tag sizing, and queue via SubmitNodeCollector.
+        // In MC 26.1 direct Font.drawInBatch against a level-render BufferSource
+        // does not land on screen at any renderLevel injection point we tried —
+        // the collector-based path is the supported one.
         ps.pushPose();
         try {
             ps.translate(
                 (float) (pos.x - cam.x),
                 (float) (pos.y - cam.y),
                 (float) (pos.z - cam.z));
-            // Billboard: rotate to face the camera. Vanilla name tags use the
-            // same rotation directly (not inverse) because drawInBatch assumes
-            // a world-to-camera-relative PoseStack with billboard pre-applied.
             ps.mulPose(ctx.camera().rotation());
-            // Vanilla name-tag convention: 0.025 world units per font unit,
-            // flipped on X/Y so the glyph reads the right way round after the
-            // camera rotation. Z stays positive so depth sorting works.
             float s = 0.025f * size;
             ps.scale(-s, -s, s);
 
-            Matrix4f matrix = ps.last().pose();
-            Component text = Component.literal(glyph);
-            float x = -font.width(text) / 2f;
+            FormattedCharSequence fcs = Component.literal(glyph).getVisualOrderText();
+            // submitText expects the text origin and takes the width-centred x
+            // offset as the second arg. No Font instance needed — the collector
+            // owns its Font reference.
             int a = clamp8(Math.round(alpha * 255.0f));
             int argb = (a << 24) | (rgb24 & 0x00FFFFFF);
             Font.DisplayMode mode = throughWalls
                 ? Font.DisplayMode.SEE_THROUGH
                 : Font.DisplayMode.NORMAL;
-            font.drawInBatch(
-                text,
-                x,
+            // Compute the x centring against the local Font instance for width
+            // measurement — the collector uses its own Font at draw time but the
+            // width is stable so this is safe.
+            float textX = -net.minecraft.client.Minecraft.getInstance().font.width(fcs) / 2f;
+            final int LIGHT_FULL = 0xF000F0;
+            ctx.collector().submitText(
+                ps,
+                textX,
                 0f,
-                argb,
-                false,
-                matrix,
-                ctx.buffers(),
+                fcs,
+                false,        // shadow
                 mode,
-                0,
-                0xF000F0);
+                LIGHT_FULL,
+                argb,
+                0,            // background colour (0 = no bg)
+                0             // outline colour (0 = no outline)
+            );
         } finally {
             ps.popPose();
         }

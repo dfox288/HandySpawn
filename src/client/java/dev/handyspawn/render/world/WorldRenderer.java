@@ -28,6 +28,7 @@ public final class WorldRenderer {
                 fabricCtx.poseStack(),
                 mc.gameRenderer.getMainCamera(),
                 fabricCtx.bufferSource(),
+                fabricCtx.submitNodeCollector(),
                 mc.level,
                 mc.getDeltaTracker().getGameTimeDeltaTicks()
             );
