@@ -55,5 +55,7 @@ public final class HandySpawn implements ClientModInitializer {
 
         // World-space rendering is wired via LevelRendererMixin (see
         // dev.handyspawn.mixin.LevelRendererMixin) — no explicit registration needed here.
+
+        dev.handyspawn.render.hud.HudRenderer.register();
     }
 }
