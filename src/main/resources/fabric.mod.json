@@ -14,6 +14,9 @@
     "icon": "assets/handyspawn/icon.png",
     "environment": "*",
     "entrypoints": {
+        "main": [
+            "dev.handyspawn.HandySpawnServer"
+        ],
         "client": [
             "dev.handyspawn.HandySpawn"
         ],
