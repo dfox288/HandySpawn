@@ -54,6 +54,10 @@ public final class RenderPrimitives {
      * argb value Font expects. {@code throughWalls} selects
      * {@link Font.DisplayMode} between {@code NORMAL} and {@code SEE_THROUGH}.
      */
+    // Rate-limit render-path logs: print once every N calls per glyph.
+    private static int debugCallCounter = 0;
+    private static final int DEBUG_LOG_EVERY_N = 120;
+
     public static void billboardGlyph(RenderContext ctx,
                                       Vec3 pos,
                                       String glyph,
@@ -64,6 +68,12 @@ public final class RenderPrimitives {
         Font font = Minecraft.getInstance().font;
         PoseStack ps = ctx.poseStack();
         Vec3 cam = ctx.camera().position();
+
+        if ((debugCallCounter++ % DEBUG_LOG_EVERY_N) == 0) {
+            dev.handyspawn.HandySpawnConstants.LOG.info(
+                "[billboard] glyph='{}' worldPos={} camPos={} mode={}",
+                glyph, pos, cam, throughWalls ? "SEE_THROUGH" : "NORMAL");
+        }
 
         ps.pushPose();
         try {

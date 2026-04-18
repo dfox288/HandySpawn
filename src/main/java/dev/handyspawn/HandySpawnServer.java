@@ -78,6 +78,11 @@ public final class HandySpawnServer implements ModInitializer {
             if (!isBed && !isAnchor) return;
             if (!(world instanceof ServerLevel serverLevel)) return;
 
+            HandySpawnConstants.LOG.info(
+                "[break] block={} pos={} bed={} anchor={} breaker={}",
+                state.getBlock().getClass().getSimpleName(), pos, isBed, isAnchor,
+                breaker == null ? "null" : breaker.getName().getString());
+
             ResourceKey<Level> worldKey = serverLevel.dimension();
 
             // Pre-compute all positions a player's spawnPos could match for
@@ -97,6 +102,9 @@ public final class HandySpawnServer implements ModInitializer {
 
                 boolean hit = spawnPos.equals(pos)
                            || (partnerPos != null && spawnPos.equals(partnerPos));
+                HandySpawnConstants.LOG.info(
+                    "[break] player={} spawnPos={} brokenPos={} partnerPos={} hit={}",
+                    p.getName().getString(), spawnPos, pos, partnerPos, hit);
                 if (!hit) continue;
 
                 PersonalSpawnKind kind = isAnchor
