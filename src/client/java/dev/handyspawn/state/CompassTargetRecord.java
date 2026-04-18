@@ -5,7 +5,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 /**
- * Immutable record of a tracked world-spawn position.
+ * Immutable record of a tracked compass-target position (the global compass
+ * target / {@code Level.getRespawnData()}).
  *
  * <p>Backed by the data delivered via
  * {@link net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket}
@@ -14,10 +15,11 @@ import net.minecraft.world.level.Level;
  * {@code /setworldspawn}) via {@code MinecraftServer.setRespawnData} /
  * {@code PlayerList.broadcastAll}. Personal per-player bed or respawn-anchor
  * spawns are stored server-side on {@code ServerPlayer.respawnConfig} and are
- * never synced to the client, so this record represents the world spawn only.
+ * never synced to the client through this channel, so this record represents
+ * the compass target only.
  */
-public record WorldSpawnRecord(BlockPos pos, ResourceKey<Level> dimension, WorldSpawnKind kind) {
-    public static WorldSpawnRecord of(BlockPos pos, ResourceKey<Level> dim, WorldSpawnKind kind) {
-        return new WorldSpawnRecord(pos.immutable(), dim, kind);
+public record CompassTargetRecord(BlockPos pos, ResourceKey<Level> dimension, CompassTargetKind kind) {
+    public static CompassTargetRecord of(BlockPos pos, ResourceKey<Level> dim, CompassTargetKind kind) {
+        return new CompassTargetRecord(pos.immutable(), dim, kind);
     }
 }

@@ -3,7 +3,7 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.WorldSpawnRecord;
+import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
@@ -13,8 +13,8 @@ import net.minecraft.world.phys.Vec3;
  * tracked world-spawn bed / respawn anchor used to be. Always rendered through
  * walls — a destroyed spawn with something built on top is a core use case.
  *
- * <p>Sources its data from {@link dev.handyspawn.state.WorldSpawnState#destroyedAt()},
- * which is populated when the tracked world-spawn block is no longer a bed or
+ * <p>Sources its data from {@link dev.handyspawn.state.CompassTargetState#destroyedAt()},
+ * which is populated when the tracked compass-target block is no longer a bed or
  * charged respawn anchor at chunk-load verification time, or when the server
  * drops its respawn data. See {@link HouseIconRenderer} for the rationale on
  * why this tracks the world spawn rather than a personal spawn.
@@ -37,7 +37,7 @@ public final class GhostMarkerRenderer {
         if (!HandySpawnConfig.get().destroyedSpawnMarker) return;
         if (ctx.level() == null) return;
 
-        WorldSpawnRecord rec = HandySpawn.worldSpawn().state().destroyedAt().orElse(null);
+        CompassTargetRecord rec = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
         if (rec == null) return;
         if (!rec.dimension().equals(ctx.level().dimension())) return;
 

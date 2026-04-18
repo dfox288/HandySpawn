@@ -6,26 +6,28 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.stats.Stats;
 import dev.handyspawn.config.HandySpawnConfig;
+import dev.handyspawn.state.CompassTargetStateController;
 import dev.handyspawn.state.ForceloadState;
 import dev.handyspawn.state.PhantomTimer;
-import dev.handyspawn.state.WorldSpawnStateController;
 
 public final class HandySpawn implements ClientModInitializer {
 
     /** Poll the server for stats roughly every 10 seconds (200 ticks @ 20tps). */
     private static final int STATS_POLL_INTERVAL_TICKS = 200;
 
-    private static WorldSpawnStateController worldSpawnController;
+    private static CompassTargetStateController compassTargetController;
     private static PhantomTimer phantomTimer;
     private static final ForceloadState FORCELOAD = new ForceloadState();
 
     /**
-     * Access the tracked world-spawn state. Note this is the world spawn (from
+     * Access the tracked compass-target state. This is the global compass
+     * target / {@code Level.getRespawnData()} (from
      * {@code ClientboundSetDefaultSpawnPositionPacket}), not a per-player bed
-     * or respawn-anchor spawn — the latter is never client-synced in MC 26.1.2.
+     * or respawn-anchor spawn — personal spawns come through
+     * {@code PersonalSpawnPayload} separately.
      */
-    public static WorldSpawnStateController worldSpawn() {
-        return worldSpawnController;
+    public static CompassTargetStateController compassTarget() {
+        return compassTargetController;
     }
 
     public static PhantomTimer phantom() {
@@ -43,8 +45,8 @@ public final class HandySpawn implements ClientModInitializer {
 
         var dir = FabricLoader.getInstance().getConfigDir()
             .resolve(HandySpawnConstants.MOD_ID).resolve("spawns");
-        worldSpawnController = new WorldSpawnStateController(dir);
-        worldSpawnController.register();
+        compassTargetController = new CompassTargetStateController(dir);
+        compassTargetController.register();
 
         phantomTimer = PhantomTimer.create();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

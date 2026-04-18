@@ -13,19 +13,19 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class WorldSpawnPersistenceTest {
+class CompassTargetPersistenceTest {
 
     private static final ResourceKey<Level> OVERWORLD =
         ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("minecraft", "overworld"));
 
     @Test
     void writingAndReadingRoundTrips(@TempDir Path tmp) {
-        WorldSpawnPersistence store = new WorldSpawnPersistence(tmp);
+        CompassTargetPersistence store = new CompassTargetPersistence(tmp);
         String worldId = "sp:TestWorld";
-        WorldSpawnRecord rec = WorldSpawnRecord.of(new BlockPos(10, 64, -30), OVERWORLD, WorldSpawnKind.BED);
+        CompassTargetRecord rec = CompassTargetRecord.of(new BlockPos(10, 64, -30), OVERWORLD, CompassTargetKind.BED);
 
-        store.write(worldId, new WorldSpawnPersistence.Snapshot(Optional.of(rec), Optional.empty()));
-        WorldSpawnPersistence.Snapshot read = store.read(worldId);
+        store.write(worldId, new CompassTargetPersistence.Snapshot(Optional.of(rec), Optional.empty()));
+        CompassTargetPersistence.Snapshot read = store.read(worldId);
 
         assertEquals(Optional.of(rec), read.current());
         assertEquals(Optional.empty(), read.destroyed());
@@ -33,19 +33,19 @@ class WorldSpawnPersistenceTest {
 
     @Test
     void readingUnknownWorldReturnsEmpty(@TempDir Path tmp) {
-        WorldSpawnPersistence store = new WorldSpawnPersistence(tmp);
-        WorldSpawnPersistence.Snapshot read = store.read("sp:NoSuch");
+        CompassTargetPersistence store = new CompassTargetPersistence(tmp);
+        CompassTargetPersistence.Snapshot read = store.read("sp:NoSuch");
         assertTrue(read.current().isEmpty());
         assertTrue(read.destroyed().isEmpty());
     }
 
     @Test
     void differentWorldKeysAreIsolated(@TempDir Path tmp) {
-        WorldSpawnPersistence store = new WorldSpawnPersistence(tmp);
-        WorldSpawnRecord a = WorldSpawnRecord.of(new BlockPos(1, 1, 1), OVERWORLD, WorldSpawnKind.BED);
-        WorldSpawnRecord b = WorldSpawnRecord.of(new BlockPos(9, 9, 9), OVERWORLD, WorldSpawnKind.RESPAWN_ANCHOR);
-        store.write("sp:A", new WorldSpawnPersistence.Snapshot(Optional.of(a), Optional.empty()));
-        store.write("mp:server.example:25565", new WorldSpawnPersistence.Snapshot(Optional.of(b), Optional.empty()));
+        CompassTargetPersistence store = new CompassTargetPersistence(tmp);
+        CompassTargetRecord a = CompassTargetRecord.of(new BlockPos(1, 1, 1), OVERWORLD, CompassTargetKind.BED);
+        CompassTargetRecord b = CompassTargetRecord.of(new BlockPos(9, 9, 9), OVERWORLD, CompassTargetKind.RESPAWN_ANCHOR);
+        store.write("sp:A", new CompassTargetPersistence.Snapshot(Optional.of(a), Optional.empty()));
+        store.write("mp:server.example:25565", new CompassTargetPersistence.Snapshot(Optional.of(b), Optional.empty()));
         assertEquals(Optional.of(a), store.read("sp:A").current());
         assertEquals(Optional.of(b), store.read("mp:server.example:25565").current());
     }

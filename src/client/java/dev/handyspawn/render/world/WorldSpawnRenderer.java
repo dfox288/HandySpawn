@@ -3,7 +3,7 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.WorldSpawnRecord;
+import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
@@ -16,9 +16,9 @@ import net.minecraft.world.phys.Vec3;
  * <p>API note (MC 26.1.2): the world spawn is plumbed to the client via
  * {@link net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket},
  * sent by {@code MinecraftServer.setRespawnData} on login and whenever
- * {@code /setworldspawn} runs. {@code WorldSpawnStateController} is the single
+ * {@code /setworldspawn} runs. {@code CompassTargetStateController} is the single
  * source of truth — reading through it keeps F1 (house icon) and F7 (this
- * glyph) consistent and lets F7 also react to destroyed-world-spawn
+ * glyph) consistent and lets F7 also react to destroyed-compass-target
  * verification.
  *
  * <p>Note: personal bed / respawn-anchor spawns stored server-side on
@@ -47,7 +47,7 @@ public final class WorldSpawnRenderer {
         if (ctx.level() == null) return;
         if (!ctx.level().dimension().equals(Level.OVERWORLD)) return;
 
-        WorldSpawnRecord rec = HandySpawn.worldSpawn().state().current().orElse(null);
+        CompassTargetRecord rec = HandySpawn.compassTarget().state().current().orElse(null);
         if (rec == null) return;
         if (!rec.dimension().equals(Level.OVERWORLD)) return;
 

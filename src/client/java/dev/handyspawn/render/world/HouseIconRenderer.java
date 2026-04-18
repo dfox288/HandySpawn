@@ -3,7 +3,7 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.WorldSpawnRecord;
+import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
@@ -39,7 +39,7 @@ public final class HouseIconRenderer {
         if (!cfg.personalSpawnMarker) return;
         if (ctx.level() == null) return;
 
-        WorldSpawnRecord rec = HandySpawn.worldSpawn().state().current().orElse(null);
+        CompassTargetRecord rec = HandySpawn.compassTarget().state().current().orElse(null);
         if (rec == null) return;
         if (!rec.dimension().equals(ctx.level().dimension())) return;
 

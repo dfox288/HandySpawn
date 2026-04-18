@@ -9,30 +9,30 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class WorldSpawnStateTest {
+class CompassTargetStateTest {
 
     private static final ResourceKey<Level> OVERWORLD =
         ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("minecraft", "overworld"));
 
     @Test
     void currentIsEmptyInitially() {
-        WorldSpawnState s = new WorldSpawnState();
+        CompassTargetState s = new CompassTargetState();
         assertTrue(s.current().isEmpty());
         assertTrue(s.destroyedAt().isEmpty());
     }
 
     @Test
     void setCurrentStoresRecord() {
-        WorldSpawnState s = new WorldSpawnState();
-        WorldSpawnRecord r = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
+        CompassTargetState s = new CompassTargetState();
+        CompassTargetRecord r = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
         s.setCurrent(r);
         assertEquals(r, s.current().orElseThrow());
     }
 
     @Test
     void clearingCurrentWhilePreviousExistedRecordsDestroyed() {
-        WorldSpawnState s = new WorldSpawnState();
-        WorldSpawnRecord old = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
+        CompassTargetState s = new CompassTargetState();
+        CompassTargetRecord old = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
         s.setCurrent(old);
         s.clearCurrent();
         assertTrue(s.current().isEmpty());
@@ -41,9 +41,9 @@ class WorldSpawnStateTest {
 
     @Test
     void newSpawnClearsDestroyed() {
-        WorldSpawnState s = new WorldSpawnState();
-        WorldSpawnRecord old = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
-        WorldSpawnRecord fresh = WorldSpawnRecord.of(new BlockPos(5, 64, 7), OVERWORLD, WorldSpawnKind.BED);
+        CompassTargetState s = new CompassTargetState();
+        CompassTargetRecord old = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
+        CompassTargetRecord fresh = CompassTargetRecord.of(new BlockPos(5, 64, 7), OVERWORLD, CompassTargetKind.BED);
         s.setCurrent(old);
         s.clearCurrent();
         s.setCurrent(fresh);
@@ -53,8 +53,8 @@ class WorldSpawnStateTest {
 
     @Test
     void settingIdenticalRecordDoesNotCreateDestroyedMarker() {
-        WorldSpawnState s = new WorldSpawnState();
-        WorldSpawnRecord r = WorldSpawnRecord.of(new BlockPos(1, 64, 2), OVERWORLD, WorldSpawnKind.BED);
+        CompassTargetState s = new CompassTargetState();
+        CompassTargetRecord r = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
         s.setCurrent(r);
         s.setCurrent(r);
         assertTrue(s.destroyedAt().isEmpty());

@@ -2,7 +2,7 @@ package dev.handyspawn.render.hud;
 
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.WorldSpawnRecord;
+import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -14,9 +14,9 @@ public final class CrossDimHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.level == null) return;
 
-        WorldSpawnRecord current = HandySpawn.worldSpawn().state().current().orElse(null);
-        WorldSpawnRecord destroyed = HandySpawn.worldSpawn().state().destroyedAt().orElse(null);
-        WorldSpawnRecord ref = current != null ? current : destroyed;
+        CompassTargetRecord current = HandySpawn.compassTarget().state().current().orElse(null);
+        CompassTargetRecord destroyed = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
+        CompassTargetRecord ref = current != null ? current : destroyed;
         if (ref == null) return;
 
         // Hide if the player is in the same dimension as the referenced spawn — F1/F3 handle that case

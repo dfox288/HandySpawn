@@ -18,37 +18,39 @@ import net.minecraft.world.level.storage.LevelData;
 import java.nio.file.Path;
 
 /**
- * Glue between Minecraft's runtime events and {@link WorldSpawnState} /
- * {@link WorldSpawnPersistence}.
+ * Glue between Minecraft's runtime events and {@link CompassTargetState} /
+ * {@link CompassTargetPersistence}.
  *
  * <p>The data source is {@code ClientLevel.getRespawnData()}, which stores the
  * last {@link net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket}
  * received from the server. In MC 26.1.2 that packet is sent only by
  * {@code MinecraftServer.setRespawnData} (on login and on {@code /setworldspawn})
- * and broadcast to every connected player — so this is the world spawn, not a
- * per-player bed or respawn anchor. Personal respawn is stored server-side on
- * {@code ServerPlayer.respawnConfig} and is not synced to the client.
+ * and broadcast to every connected player — so this is the compass target (the
+ * world spawn used by compasses), not a per-player bed or respawn anchor.
+ * Personal respawn is stored server-side on {@code ServerPlayer.respawnConfig}
+ * and is not synced to the client via this channel; HandySpawn's own
+ * {@code PersonalSpawnPayload} covers the per-player case separately.
  *
  * <p>On join the controller resolves a stable per-world identifier (singleplayer
  * save name or multiplayer server address), reads any persisted snapshot and
  * restores in-memory state. On disconnect it flushes state to disk. Every client
  * tick it diffs the client level's respawn data against the stored record and
- * persists any changes. When a chunk containing the stored spawn loads, it
+ * persists any changes. When a chunk containing the stored target loads, it
  * verifies the underlying block still matches the recorded kind and moves the
  * record to the destroyed slot otherwise.
  */
-public final class WorldSpawnStateController {
+public final class CompassTargetStateController {
 
-    private final WorldSpawnState state;
-    private final WorldSpawnPersistence persistence;
+    private final CompassTargetState state;
+    private final CompassTargetPersistence persistence;
     private String currentWorldId;
 
-    public WorldSpawnStateController(Path storageDir) {
-        this.state = new WorldSpawnState();
-        this.persistence = new WorldSpawnPersistence(storageDir);
+    public CompassTargetStateController(Path storageDir) {
+        this.state = new CompassTargetState();
+        this.persistence = new CompassTargetPersistence(storageDir);
     }
 
-    public WorldSpawnState state() {
+    public CompassTargetState state() {
         return state;
     }
 
@@ -61,8 +63,8 @@ public final class WorldSpawnStateController {
 
     private void loadForCurrentWorld(Minecraft client) {
         currentWorldId = resolveWorldId(client);
-        WorldSpawnPersistence.Snapshot snap = persistence.read(currentWorldId);
-        // WorldSpawnState enforces mutual exclusion: current and destroyed are never both populated.
+        CompassTargetPersistence.Snapshot snap = persistence.read(currentWorldId);
+        // CompassTargetState enforces mutual exclusion: current and destroyed are never both populated.
         if (snap.current().isPresent()) {
             state.setCurrent(snap.current().get());
         } else if (snap.destroyed().isPresent()) {
@@ -90,21 +92,21 @@ public final class WorldSpawnStateController {
 
         BlockPos spawnPos = respawn.pos();
         ResourceKey<Level> spawnDim = respawn.dimension();
-        WorldSpawnKind kind = inferKindFromBlock(client, spawnPos, spawnDim);
-        WorldSpawnRecord fresh = WorldSpawnRecord.of(spawnPos, spawnDim, kind);
+        CompassTargetKind kind = inferKindFromBlock(client, spawnPos, spawnDim);
+        CompassTargetRecord fresh = CompassTargetRecord.of(spawnPos, spawnDim, kind);
         if (state.current().map(cur -> !cur.equals(fresh)).orElse(true)) {
             state.setCurrent(fresh);
             save();
         }
     }
 
-    private WorldSpawnKind inferKindFromBlock(Minecraft client, BlockPos pos, ResourceKey<Level> dim) {
+    private CompassTargetKind inferKindFromBlock(Minecraft client, BlockPos pos, ResourceKey<Level> dim) {
         if (client.level != null && client.level.dimension().equals(dim)) {
             var block = client.level.getBlockState(pos).getBlock();
-            if (block instanceof RespawnAnchorBlock) return WorldSpawnKind.RESPAWN_ANCHOR;
-            if (block instanceof BedBlock) return WorldSpawnKind.BED;
+            if (block instanceof RespawnAnchorBlock) return CompassTargetKind.RESPAWN_ANCHOR;
+            if (block instanceof BedBlock) return CompassTargetKind.BED;
         }
-        return state.current().map(WorldSpawnRecord::kind).orElse(WorldSpawnKind.BED);
+        return state.current().map(CompassTargetRecord::kind).orElse(CompassTargetKind.BED);
     }
 
     private void verifyDestroyedOnChunkLoad(ClientLevel world, ChunkPos cp) {
@@ -125,7 +127,7 @@ public final class WorldSpawnStateController {
 
     private void save() {
         if (currentWorldId == null) return;
-        persistence.write(currentWorldId, new WorldSpawnPersistence.Snapshot(
+        persistence.write(currentWorldId, new CompassTargetPersistence.Snapshot(
             state.current(), state.destroyedAt()));
     }
 

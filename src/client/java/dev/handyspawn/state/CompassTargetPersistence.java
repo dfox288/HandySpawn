@@ -18,21 +18,21 @@ import java.util.HexFormat;
 import java.util.Optional;
 
 /**
- * Per-world persistence of the tracked world-spawn state. Files are keyed by a
- * SHA-1 hash of a caller-supplied world identifier so singleplayer save names
+ * Per-world persistence of the tracked compass-target state. Files are keyed by
+ * a SHA-1 hash of a caller-supplied world identifier so singleplayer save names
  * and multiplayer server addresses don't collide on disk.
  */
-public final class WorldSpawnPersistence {
+public final class CompassTargetPersistence {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public record Dto(Entry current, Entry destroyed) {}
     public record Entry(int x, int y, int z, String dimension, String kind) {}
-    public record Snapshot(Optional<WorldSpawnRecord> current, Optional<WorldSpawnRecord> destroyed) {}
+    public record Snapshot(Optional<CompassTargetRecord> current, Optional<CompassTargetRecord> destroyed) {}
 
     private final Path baseDir;
 
-    public WorldSpawnPersistence(Path baseDir) {
+    public CompassTargetPersistence(Path baseDir) {
         this.baseDir = baseDir;
     }
 
@@ -44,8 +44,8 @@ public final class WorldSpawnPersistence {
             Dto dto = GSON.fromJson(json, Dto.class);
             if (dto == null) return new Snapshot(Optional.empty(), Optional.empty());
             return new Snapshot(
-                Optional.ofNullable(dto.current()).map(WorldSpawnPersistence::toRecord),
-                Optional.ofNullable(dto.destroyed()).map(WorldSpawnPersistence::toRecord)
+                Optional.ofNullable(dto.current()).map(CompassTargetPersistence::toRecord),
+                Optional.ofNullable(dto.destroyed()).map(CompassTargetPersistence::toRecord)
             );
         } catch (IOException | RuntimeException e) {
             return new Snapshot(Optional.empty(), Optional.empty());
@@ -57,8 +57,8 @@ public final class WorldSpawnPersistence {
         try {
             Files.createDirectories(file.getParent());
             Dto dto = new Dto(
-                snap.current().map(WorldSpawnPersistence::toEntry).orElse(null),
-                snap.destroyed().map(WorldSpawnPersistence::toEntry).orElse(null)
+                snap.current().map(CompassTargetPersistence::toEntry).orElse(null),
+                snap.destroyed().map(CompassTargetPersistence::toEntry).orElse(null)
             );
             Files.writeString(file, GSON.toJson(dto), StandardCharsets.UTF_8);
         } catch (IOException ignored) {
@@ -80,7 +80,7 @@ public final class WorldSpawnPersistence {
         }
     }
 
-    private static Entry toEntry(WorldSpawnRecord r) {
+    private static Entry toEntry(CompassTargetRecord r) {
         return new Entry(
             r.pos().getX(), r.pos().getY(), r.pos().getZ(),
             r.dimension().identifier().toString(),
@@ -88,9 +88,9 @@ public final class WorldSpawnPersistence {
         );
     }
 
-    private static WorldSpawnRecord toRecord(Entry e) {
+    private static CompassTargetRecord toRecord(Entry e) {
         Identifier id = Identifier.parse(e.dimension());
         ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION, id);
-        return WorldSpawnRecord.of(new BlockPos(e.x(), e.y(), e.z()), dim, WorldSpawnKind.valueOf(e.kind()));
+        return CompassTargetRecord.of(new BlockPos(e.x(), e.y(), e.z()), dim, CompassTargetKind.valueOf(e.kind()));
     }
 }
