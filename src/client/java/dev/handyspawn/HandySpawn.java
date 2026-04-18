@@ -6,6 +6,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.stats.Stats;
 import dev.handyspawn.config.HandySpawnConfig;
+import dev.handyspawn.state.ForceloadState;
 import dev.handyspawn.state.PhantomTimer;
 import dev.handyspawn.state.SpawnStateController;
 
@@ -16,6 +17,7 @@ public final class HandySpawn implements ClientModInitializer {
 
     private static SpawnStateController spawnController;
     private static PhantomTimer phantomTimer;
+    private static final ForceloadState FORCELOAD = new ForceloadState();
 
     public static SpawnStateController spawn() {
         return spawnController;
@@ -23,6 +25,10 @@ public final class HandySpawn implements ClientModInitializer {
 
     public static PhantomTimer phantom() {
         return phantomTimer;
+    }
+
+    public static ForceloadState forceload() {
+        return FORCELOAD;
     }
 
     @Override
