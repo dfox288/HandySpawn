@@ -1,0 +1,22 @@
+{
+  "handyspawn.config.title": "HandySpawn",
+  "handyspawn.config.category.personal": "Personal Spawn",
+  "handyspawn.config.category.phantom": "Phantom Awareness",
+  "handyspawn.config.category.navigation": "Navigation",
+  "handyspawn.config.category.world": "World",
+
+  "handyspawn.config.personalSpawnMarker": "House icon on your spawn bed/anchor",
+  "handyspawn.config.personalSpawnThroughWalls": "Visible through walls",
+  "handyspawn.config.sleepReadinessTint": "Tint beds green when sleep is possible",
+  "handyspawn.config.destroyedSpawnMarker": "Mark destroyed spawn location",
+
+  "handyspawn.config.phantomTimer": "Show phantom insomnia HUD countdown",
+  "handyspawn.config.phantomWarningStartTick": "Warning countdown starts (ticks after last sleep)",
+  "handyspawn.config.daytimeThunderstormHint": "Hint when daytime thunderstorms allow sleep",
+
+  "handyspawn.config.crossDimensionReadout": "Show spawn status when in another dimension",
+
+  "handyspawn.config.worldSpawnMarker": "Mark world-spawn block",
+  "handyspawn.config.forceloadBadge": "HUD badge when in a forceloaded chunk (singleplayer)",
+  "handyspawn.config.forceloadBorderOverlay": "Chunk-border overlay for forceloaded chunks (singleplayer)"
+}
