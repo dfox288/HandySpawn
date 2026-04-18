@@ -2,10 +2,11 @@ package dev.handyspawn.render.hud;
 
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 public final class CrossDimHud {
 
@@ -14,18 +15,29 @@ public final class CrossDimHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.level == null) return;
 
-        CompassTargetRecord current = HandySpawn.compassTarget().state().current().orElse(null);
-        CompassTargetRecord destroyed = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
-        CompassTargetRecord ref = current != null ? current : destroyed;
-        if (ref == null) return;
+        boolean hasCurrent;
+        ResourceKey<Level> dim;
+        if (HandySpawn.session().isServerSynced()) {
+            var current = HandySpawn.personal().current().orElse(null);
+            var destroyed = HandySpawn.personal().destroyedAt().orElse(null);
+            if (current == null && destroyed == null) return;
+            hasCurrent = current != null;
+            dim = hasCurrent ? current.dimension() : destroyed.dimension();
+        } else {
+            var current = HandySpawn.compassTarget().state().current().orElse(null);
+            var destroyed = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
+            if (current == null && destroyed == null) return;
+            hasCurrent = current != null;
+            dim = hasCurrent ? current.dimension() : destroyed.dimension();
+        }
 
         // Hide if the player is in the same dimension as the referenced spawn — F1/F3 handle that case
-        if (ref.dimension().equals(mc.level.dimension())) return;
+        if (dim.equals(mc.level.dimension())) return;
 
-        String dim = simpleDimensionName(ref.dimension().identifier().toString());
-        String status = current != null ? "intact" : "DESTROYED";
-        int colour = current != null ? 0xFFFFFFFF : 0xFFFF5050;
-        String line = "\u2302 " + dim + " \u00b7 " + status; // ⌂ prefix, · separator
+        String dimName = simpleDimensionName(dim.identifier().toString());
+        String status = hasCurrent ? "intact" : "DESTROYED";
+        int colour = hasCurrent ? 0xFFFFFFFF : 0xFFFF5050;
+        String line = "\u2302 " + dimName + " \u00b7 " + status; // ⌂ prefix, · separator
 
         int x = 4;
         int y = 4;

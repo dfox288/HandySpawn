@@ -3,22 +3,19 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * F1 feature: billboard a small house sprite above the tracked world spawn
- * (bed or respawn anchor) while the player is in the same dimension.
+ * F1 feature: billboard a small house sprite above the player's current spawn
+ * (bed or charged respawn anchor) while in the same dimension. When the server
+ * has HandySpawn installed the marker tracks the personal per-player spawn
+ * (via {@link dev.handyspawn.state.PersonalSpawnState}); otherwise it falls
+ * back to the compass target / world spawn synced through vanilla channels.
  * Cross-dimension callout is handled by the HUD feature (F6).
- *
- * <p>In MC 26.1.2 the server only syncs the world spawn to clients (via
- * {@code ClientboundSetDefaultSpawnPositionPacket}); per-player bed / respawn-anchor
- * spawns live server-side on {@code ServerPlayer.respawnConfig} and are never
- * sent to the client. This marker therefore points at the world spawn rather
- * than an individual player's bed — identical to the F7 marker but with a
- * distinct sprite, size and through-walls option.
  */
 public final class HouseIconRenderer {
 
@@ -39,11 +36,21 @@ public final class HouseIconRenderer {
         if (!cfg.personalSpawnMarker) return;
         if (ctx.level() == null) return;
 
-        CompassTargetRecord rec = HandySpawn.compassTarget().state().current().orElse(null);
-        if (rec == null) return;
-        if (!rec.dimension().equals(ctx.level().dimension())) return;
+        BlockPos pos;
+        ResourceKey<Level> dim;
+        if (HandySpawn.session().isServerSynced()) {
+            var record = HandySpawn.personal().current().orElse(null);
+            if (record == null) return;
+            pos = record.pos();
+            dim = record.dimension();
+        } else {
+            var record = HandySpawn.compassTarget().state().current().orElse(null);
+            if (record == null) return;
+            pos = record.pos();
+            dim = record.dimension();
+        }
+        if (!dim.equals(ctx.level().dimension())) return;
 
-        BlockPos pos = rec.pos();
         Vec3 above = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5 + Y_OFFSET, pos.getZ() + 0.5);
         RenderPrimitives.billboardIcon(ctx, above, SPRITE, ICON_SIZE, ICON_ALPHA,
             cfg.personalSpawnThroughWalls);

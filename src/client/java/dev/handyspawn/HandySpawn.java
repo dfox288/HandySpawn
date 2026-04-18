@@ -8,6 +8,7 @@ import dev.handyspawn.net.PersonalSpawnPayload;
 import dev.handyspawn.state.CompassTargetStateController;
 import dev.handyspawn.state.PersonalSpawnState;
 import dev.handyspawn.state.PhantomTimer;
+import dev.handyspawn.state.SessionState;
 import dev.handyspawn.state.SharedForceloadState;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -26,14 +27,7 @@ public final class HandySpawn implements ClientModInitializer {
     private static PhantomTimer phantomTimer;
     private static PersonalSpawnState personalSpawnState;
     private static SharedForceloadState forceloadState;
-
-    /**
-     * Whether the current server sent a {@link HandshakePayload}. This is a
-     * temporary gate — V7 replaces it with a richer {@code SessionState} that
-     * also tracks connection lifecycle. For now, renderers and HUDs that rely
-     * on server-synced data can short-circuit when this is {@code false}.
-     */
-    private static boolean handshakeReceived;
+    private static SessionState sessionState;
 
     /**
      * Access the tracked compass-target state. This is the global compass
@@ -58,8 +52,14 @@ public final class HandySpawn implements ClientModInitializer {
         return personalSpawnState;
     }
 
-    public static boolean serverHasHandyspawn() {
-        return handshakeReceived;
+    /**
+     * Per-connection session / handshake state. Renderers read
+     * {@link SessionState#isServerSynced()} to choose between
+     * {@link PersonalSpawnState} (server-synced) and the compass-target
+     * fallback.
+     */
+    public static SessionState session() {
+        return sessionState;
     }
 
     @Override
@@ -79,9 +79,10 @@ public final class HandySpawn implements ClientModInitializer {
 
         personalSpawnState = new PersonalSpawnState();
         forceloadState = new SharedForceloadState();
+        sessionState = new SessionState();
 
         ClientPlayNetworking.registerGlobalReceiver(HandshakePayload.ID, (payload, ctx) -> {
-            handshakeReceived = true;
+            sessionState.onHandshakeReceived();
             HandySpawnConstants.LOG.info("Server has HandySpawn installed");
         });
 
@@ -94,16 +95,23 @@ public final class HandySpawn implements ClientModInitializer {
             forceloadState.update(payload.dimension(), payload.packedChunks());
         });
 
+        // Mark the session as started on join; CompassTargetStateController
+        // registers its own JOIN handler to load the persisted compass target.
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            sessionState.onJoin();
+        });
+
         // Clear transient per-connection state on disconnect so a later join
         // doesn't inherit the previous server's spawns or forceloaded chunks.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            handshakeReceived = false;
+            sessionState.onDisconnect();
             personalSpawnState.clear();
             forceloadState.clear();
         });
 
         phantomTimer = PhantomTimer.create();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            sessionState.onTick(msg -> HandySpawnConstants.LOG.info(msg));
             if (client.player == null || client.getConnection() == null) return;
             if (phantomTimer.shouldRequestStatsThisTick(STATS_POLL_INTERVAL_TICKS)) {
                 client.getConnection().send(

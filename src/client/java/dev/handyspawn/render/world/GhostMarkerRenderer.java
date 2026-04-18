@@ -3,21 +3,22 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * F3 feature: billboard a red ghost-house sprite at the coordinates where the
- * tracked world-spawn bed / respawn anchor used to be. Always rendered through
- * walls — a destroyed spawn with something built on top is a core use case.
+ * player's tracked spawn used to be. Always rendered through walls — a
+ * destroyed spawn with something built on top is a core use case.
  *
- * <p>Sources its data from {@link dev.handyspawn.state.CompassTargetState#destroyedAt()},
- * which is populated when the tracked compass-target block is no longer a bed or
- * charged respawn anchor at chunk-load verification time, or when the server
- * drops its respawn data. See {@link HouseIconRenderer} for the rationale on
- * why this tracks the world spawn rather than a personal spawn.
+ * <p>When the server has HandySpawn installed, sources from
+ * {@link dev.handyspawn.state.PersonalSpawnState#destroyedAt()} (populated
+ * server-side on bed/anchor destruction). Otherwise falls back to
+ * {@link dev.handyspawn.state.CompassTargetState#destroyedAt()} which is
+ * populated on chunk-load verification of the world spawn.
  */
 public final class GhostMarkerRenderer {
 
@@ -37,11 +38,21 @@ public final class GhostMarkerRenderer {
         if (!HandySpawnConfig.get().destroyedSpawnMarker) return;
         if (ctx.level() == null) return;
 
-        CompassTargetRecord rec = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
-        if (rec == null) return;
-        if (!rec.dimension().equals(ctx.level().dimension())) return;
+        BlockPos pos;
+        ResourceKey<Level> dim;
+        if (HandySpawn.session().isServerSynced()) {
+            var rec = HandySpawn.personal().destroyedAt().orElse(null);
+            if (rec == null) return;
+            pos = rec.pos();
+            dim = rec.dimension();
+        } else {
+            var rec = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
+            if (rec == null) return;
+            pos = rec.pos();
+            dim = rec.dimension();
+        }
+        if (!dim.equals(ctx.level().dimension())) return;
 
-        BlockPos pos = rec.pos();
         Vec3 above = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5 + Y_OFFSET, pos.getZ() + 0.5);
         // Always through-walls for ghost marker so it's findable even with blocks built on top.
         RenderPrimitives.billboardIcon(ctx, above, SPRITE, ICON_SIZE, ICON_ALPHA, true);
