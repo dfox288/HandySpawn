@@ -8,19 +8,24 @@ import net.minecraft.stats.Stats;
 import dev.handyspawn.config.HandySpawnConfig;
 import dev.handyspawn.state.ForceloadState;
 import dev.handyspawn.state.PhantomTimer;
-import dev.handyspawn.state.SpawnStateController;
+import dev.handyspawn.state.WorldSpawnStateController;
 
 public final class HandySpawn implements ClientModInitializer {
 
     /** Poll the server for stats roughly every 10 seconds (200 ticks @ 20tps). */
     private static final int STATS_POLL_INTERVAL_TICKS = 200;
 
-    private static SpawnStateController spawnController;
+    private static WorldSpawnStateController worldSpawnController;
     private static PhantomTimer phantomTimer;
     private static final ForceloadState FORCELOAD = new ForceloadState();
 
-    public static SpawnStateController spawn() {
-        return spawnController;
+    /**
+     * Access the tracked world-spawn state. Note this is the world spawn (from
+     * {@code ClientboundSetDefaultSpawnPositionPacket}), not a per-player bed
+     * or respawn-anchor spawn — the latter is never client-synced in MC 26.1.2.
+     */
+    public static WorldSpawnStateController worldSpawn() {
+        return worldSpawnController;
     }
 
     public static PhantomTimer phantom() {
@@ -38,8 +43,8 @@ public final class HandySpawn implements ClientModInitializer {
 
         var dir = FabricLoader.getInstance().getConfigDir()
             .resolve(HandySpawnConstants.MOD_ID).resolve("spawns");
-        spawnController = new SpawnStateController(dir);
-        spawnController.register();
+        worldSpawnController = new WorldSpawnStateController(dir);
+        worldSpawnController.register();
 
         phantomTimer = PhantomTimer.create();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

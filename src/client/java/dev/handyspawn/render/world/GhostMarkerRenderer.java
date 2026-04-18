@@ -3,16 +3,21 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.SpawnRecord;
+import dev.handyspawn.state.WorldSpawnRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * F3 feature: billboard a red ghost-house sprite at the coordinates where the
- * player's former personal spawn used to be (destroyed bed / broken respawn
- * anchor). Always rendered through walls — a destroyed spawn with something
- * built on top is a core use case for this marker.
+ * tracked world-spawn bed / respawn anchor used to be. Always rendered through
+ * walls — a destroyed spawn with something built on top is a core use case.
+ *
+ * <p>Sources its data from {@link dev.handyspawn.state.WorldSpawnState#destroyedAt()},
+ * which is populated when the tracked world-spawn block is no longer a bed or
+ * charged respawn anchor at chunk-load verification time, or when the server
+ * drops its respawn data. See {@link HouseIconRenderer} for the rationale on
+ * why this tracks the world spawn rather than a personal spawn.
  */
 public final class GhostMarkerRenderer {
 
@@ -32,7 +37,7 @@ public final class GhostMarkerRenderer {
         if (!HandySpawnConfig.get().destroyedSpawnMarker) return;
         if (ctx.level() == null) return;
 
-        SpawnRecord rec = HandySpawn.spawn().state().destroyedAt().orElse(null);
+        WorldSpawnRecord rec = HandySpawn.worldSpawn().state().destroyedAt().orElse(null);
         if (rec == null) return;
         if (!rec.dimension().equals(ctx.level().dimension())) return;
 

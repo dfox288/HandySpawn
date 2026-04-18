@@ -3,15 +3,22 @@ package dev.handyspawn.render.world;
 import dev.handyspawn.HandySpawn;
 import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
-import dev.handyspawn.state.SpawnRecord;
+import dev.handyspawn.state.WorldSpawnRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * F1 feature: billboard a small house sprite above the player's current personal
- * spawn (bed or respawn anchor) while the player is in the same dimension as the
- * spawn. Cross-dimension callout is handled by the HUD feature (F6).
+ * F1 feature: billboard a small house sprite above the tracked world spawn
+ * (bed or respawn anchor) while the player is in the same dimension.
+ * Cross-dimension callout is handled by the HUD feature (F6).
+ *
+ * <p>In MC 26.1.2 the server only syncs the world spawn to clients (via
+ * {@code ClientboundSetDefaultSpawnPositionPacket}); per-player bed / respawn-anchor
+ * spawns live server-side on {@code ServerPlayer.respawnConfig} and are never
+ * sent to the client. This marker therefore points at the world spawn rather
+ * than an individual player's bed — identical to the F7 marker but with a
+ * distinct sprite, size and through-walls option.
  */
 public final class HouseIconRenderer {
 
@@ -32,7 +39,7 @@ public final class HouseIconRenderer {
         if (!cfg.personalSpawnMarker) return;
         if (ctx.level() == null) return;
 
-        SpawnRecord rec = HandySpawn.spawn().state().current().orElse(null);
+        WorldSpawnRecord rec = HandySpawn.worldSpawn().state().current().orElse(null);
         if (rec == null) return;
         if (!rec.dimension().equals(ctx.level().dimension())) return;
 

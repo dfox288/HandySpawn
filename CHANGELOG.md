@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.1 — 2026-04-18
+
+### Fixed / clarified
+- Separated the world-spawn data layer naming from the language of "personal spawn".
+  Investigation of MC 26.1.2 confirmed that `ClientboundSetDefaultSpawnPositionPacket`
+  is only ever sent by `MinecraftServer.setRespawnData` (login and `/setworldspawn`,
+  broadcast to all players). Personal bed and respawn-anchor spawns are stored
+  server-side on `ServerPlayer.respawnConfig` and are **not** synced to the client
+  in any packet, so it is not possible to distinguish personal spawn from world
+  spawn on the client.
+- Renamed `SpawnState*` to `WorldSpawnState*` (`SpawnRecord`, `SpawnKind`,
+  `SpawnPersistence`, `SpawnStateController`) to match what the data actually
+  represents. `WorldSpawnRenderer` (F7) now reads from the shared controller
+  state instead of re-reading `Level.getRespawnData()` directly, giving a single
+  source of truth for F1/F3/F6/F7.
+
+### Known limitations (updated and honest)
+- The F1 house icon, F3 ghost marker, F6 cross-dimension readout and F7 world-spawn
+  marker all reflect the **world spawn** as broadcast by the server. Distinguishing
+  a per-player bed/anchor respawn on the client would require a mixin that snoops
+  successful bed interactions or chat messages; deferred to a future release.
+- Through-walls rendering falls back to depth-tested rendering (polish task).
+- Forceload visuals (F8/F9) are singleplayer-only because the forceload chunk set
+  is not synced to clients on vanilla servers.
+
 ## 0.1.0 — 2026-04-18
 
 Initial release.
@@ -24,6 +49,4 @@ Initial release.
 - Java 25
 
 ### Known limitations
-- World-spawn marker (F7) currently reads the same `Level.getRespawnData()` source as the personal-spawn marker (F1); when the player has set a bed spawn, both features resolve to the same position. Distinguishing true world spawn from personal respawn on the client requires snapshotting the initial `ClientboundSetDefaultSpawnPositionPacket` — deferred to a future release.
-- Through-walls rendering for the personal-spawn marker currently falls back to depth-tested rendering; a dedicated no-depth `RenderType` variant is a polish task.
-- Feature 8/9 (forceload visuals) are singleplayer-only because the forceload chunk set is not synced to clients on vanilla servers.
+- See consolidated notes under 0.1.1.
