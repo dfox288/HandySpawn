@@ -2,11 +2,14 @@ package dev.handyspawn.render.world;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 
 /**
  * Three world-space rendering primitives shared by the per-feature renderers.
@@ -30,58 +33,73 @@ import net.minecraft.world.phys.Vec3;
 public final class RenderPrimitives {
 
     /**
-     * Draw a camera-facing textured quad at a world position.
+     * Draw a camera-facing Unicode glyph at a world position.
      *
-     * <p>First-pass quality: the quad billboards correctly and samples the sprite
-     * texture, but {@code throughWalls} is currently ignored — we always use
-     * depth-tested {@link RenderTypes#text(Identifier)}. Proper through-walls
-     * support needs a custom {@code RenderType} variant with depth testing
-     * disabled, which is deferred to a polish task.
+     * <p>Implementation note (MC 26.1.2): the vanilla LevelRenderer sets up its
+     * own view-matrix state on the PoseStack and tears it back down before
+     * returning. Our render hook lives at {@code @At("RETURN")} of
+     * {@code LevelRenderer.renderLevel} and receives a fresh PoseStack with no
+     * view matrix applied, so a naive {@code translate + billboard} on a raw
+     * textured quad yields a screen-locked shape that drifts with the camera
+     * and renders black (no sampler bound). We piggy-back on
+     * {@link Font#drawInBatch} — the same idiom vanilla uses for entity name
+     * tags — because the font renderer sets up its own matrix state internally
+     * and works correctly against a camera-relative PoseStack. A sprite-based
+     * path is tracked as a polish task.
+     *
+     * <p>{@code glyph} is the text content (typically a single Unicode
+     * character). {@code size} is a multiplier on the vanilla name-tag scale
+     * (0.025) — 1.0 matches vanilla entity names, larger reads as a landmark.
+     * {@code rgb24} is the 0xRRGGBB tint; alpha is folded in to produce the
+     * argb value Font expects. {@code throughWalls} selects
+     * {@link Font.DisplayMode} between {@code NORMAL} and {@code SEE_THROUGH}.
      */
-    public static void billboardIcon(RenderContext ctx,
-                                     Vec3 pos,
-                                     Identifier sprite,
-                                     float size,
-                                     float alpha,
-                                     boolean throughWalls) {
+    public static void billboardGlyph(RenderContext ctx,
+                                      Vec3 pos,
+                                      String glyph,
+                                      float size,
+                                      int rgb24,
+                                      float alpha,
+                                      boolean throughWalls) {
+        Font font = Minecraft.getInstance().font;
         PoseStack ps = ctx.poseStack();
         Vec3 cam = ctx.camera().position();
+
         ps.pushPose();
         try {
             ps.translate(
                 (float) (pos.x - cam.x),
                 (float) (pos.y - cam.y),
                 (float) (pos.z - cam.z));
-            // Billboard: rotate the quad to face the camera.
+            // Billboard: rotate to face the camera. Vanilla name tags use the
+            // same rotation directly (not inverse) because drawInBatch assumes
+            // a world-to-camera-relative PoseStack with billboard pre-applied.
             ps.mulPose(ctx.camera().rotation());
+            // Vanilla name-tag convention: 0.025 world units per font unit,
+            // flipped on X/Y so the glyph reads the right way round after the
+            // camera rotation. Z stays positive so depth sorting works.
+            float s = 0.025f * size;
+            ps.scale(-s, -s, s);
 
-            // TODO(polish): real through-walls support needs a depth-test-off variant.
-            // entityTranslucent is a 3D world-space render type; RenderTypes.text was designed
-            // for the 2D HUD pipeline and its shader doesn't project world-space coords correctly
-            // (the icon appeared screen-locked and drifted when the camera turned).
-            RenderType layer = RenderTypes.entityTranslucent(sprite);
-            VertexConsumer vc = ctx.buffers().getBuffer(layer);
-
+            Matrix4f matrix = ps.last().pose();
+            Component text = Component.literal(glyph);
+            float x = -font.width(text) / 2f;
             int a = clamp8(Math.round(alpha * 255.0f));
-            int r = 255, g = 255, b = 255;
-            float h = size * 0.5f;
-            PoseStack.Pose pose = ps.last();
-
-            // Quad on XY plane at z=0, corners:
-            //   (-h,-h) -- ( h,-h)
-            //   (-h, h) -- ( h, h)
-            // Wound CCW when viewed from +Z (post-billboard: toward the camera).
-            // Full-bright lightmap (15/15 block/sky) so the icon renders at consistent
-            // brightness regardless of ambient lighting. NO_OVERLAY disables entity
-            // damage/hurt tint.
-            final int LIGHT_FULL = 0xF000F0;
-            final int NO_OVERLAY = 0x00F000F0;
-            // entityTranslucent expects a full vertex: pos + color + uv + overlay + light + normal.
-            // Normal points at +Z (toward the camera post-billboard rotation).
-            vc.addVertex(pose, -h, -h, 0f).setColor(r, g, b, a).setUv(0f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
-            vc.addVertex(pose,  h, -h, 0f).setColor(r, g, b, a).setUv(1f, 1f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
-            vc.addVertex(pose,  h,  h, 0f).setColor(r, g, b, a).setUv(1f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
-            vc.addVertex(pose, -h,  h, 0f).setColor(r, g, b, a).setUv(0f, 0f).setOverlay(NO_OVERLAY).setLight(LIGHT_FULL).setNormal(pose, 0f, 0f, 1f);
+            int argb = (a << 24) | (rgb24 & 0x00FFFFFF);
+            Font.DisplayMode mode = throughWalls
+                ? Font.DisplayMode.SEE_THROUGH
+                : Font.DisplayMode.NORMAL;
+            font.drawInBatch(
+                text,
+                x,
+                0f,
+                argb,
+                false,
+                matrix,
+                ctx.buffers(),
+                mode,
+                0,
+                0xF000F0);
         } finally {
             ps.popPose();
         }

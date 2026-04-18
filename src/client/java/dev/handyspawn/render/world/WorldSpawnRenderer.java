@@ -1,11 +1,9 @@
 package dev.handyspawn.render.world;
 
 import dev.handyspawn.HandySpawn;
-import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
 import dev.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -30,14 +28,20 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class WorldSpawnRenderer {
 
-    private static final Identifier SPRITE =
-        Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "textures/gui/icons/worldspawn.png");
+    /**
+     * Compass glyph (U+2316 POSITION INDICATOR). Distinct from the HOUSE glyph
+     * used for personal spawn so the two can coexist without confusion.
+     */
+    private static final String GLYPH = "\u2316";
 
-    /** Quad side length in world units. Slightly larger than the house icon to read as a landmark. */
-    private static final float ICON_SIZE = 0.8f;
+    /** Muted gold, reads as "landmark". */
+    private static final int COLOR_RGB = 0xFFE080;
+
+    /** Scale factor; slightly larger than the house icon to read as a landmark. */
+    private static final float ICON_SIZE = 1.6f;
 
     /** Opacity (0..1) — subtle. */
-    private static final float ICON_ALPHA = 0.8f;
+    private static final float ICON_ALPHA = 0.85f;
 
     /** World-space offset above the spawn block so the glyph hovers. */
     private static final double Y_OFFSET = 1.5;
@@ -53,7 +57,7 @@ public final class WorldSpawnRenderer {
 
         BlockPos spawn = rec.pos();
         Vec3 above = new Vec3(spawn.getX() + 0.5, spawn.getY() + 0.5 + Y_OFFSET, spawn.getZ() + 0.5);
-        RenderPrimitives.billboardIcon(ctx, above, SPRITE, ICON_SIZE, ICON_ALPHA, false);
+        RenderPrimitives.billboardGlyph(ctx, above, GLYPH, ICON_SIZE, COLOR_RGB, ICON_ALPHA, false);
     }
 
     private WorldSpawnRenderer() {}

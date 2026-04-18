@@ -1,10 +1,8 @@
 package dev.handyspawn.render.world;
 
 import dev.handyspawn.HandySpawn;
-import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -19,14 +17,22 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class HouseIconRenderer {
 
-    private static final Identifier SPRITE =
-        Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "textures/gui/icons/house.png");
+    /**
+     * Unicode "HOUSE" (U+2302) — used in lieu of a sprite because {@link
+     * RenderPrimitives#billboardGlyph} is the working billboard path in
+     * MC 26.1.2 under our injection point. A sprite-based path is tracked as
+     * a polish task.
+     */
+    private static final String GLYPH = "\u2302";
 
-    /** Quad side length in world units. */
-    private static final float ICON_SIZE = 0.6f;
+    /** Warm off-white, reads as "alive / active" next to the ghost marker's red. */
+    private static final int COLOR_RGB = 0xFFF0C8;
+
+    /** Scale factor; larger = more legible at range. */
+    private static final float ICON_SIZE = 1.4f;
 
     /** Opacity (0..1). */
-    private static final float ICON_ALPHA = 0.9f;
+    private static final float ICON_ALPHA = 0.95f;
 
     /** World-space offset above the block so the icon hovers over the bed/anchor. */
     private static final double Y_OFFSET = 1.2;
@@ -52,7 +58,7 @@ public final class HouseIconRenderer {
         if (!dim.equals(ctx.level().dimension())) return;
 
         Vec3 above = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5 + Y_OFFSET, pos.getZ() + 0.5);
-        RenderPrimitives.billboardIcon(ctx, above, SPRITE, ICON_SIZE, ICON_ALPHA, false);
+        RenderPrimitives.billboardGlyph(ctx, above, GLYPH, ICON_SIZE, COLOR_RGB, ICON_ALPHA, false);
     }
 
     private HouseIconRenderer() {}

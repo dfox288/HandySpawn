@@ -45,6 +45,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * vanilla stack via {@code @Local}. The render primitives translate everything by
  * {@code (pos - cameraPos)} and billboard via {@code camera.rotation()}, so they
  * are camera-relative and do not rely on inheriting world-space matrix state.
+ * World-space glyphs go through {@link net.minecraft.client.gui.Font#drawInBatch},
+ * which sets up its own matrix state internally and works correctly against a
+ * fresh, camera-relative PoseStack — the same idiom vanilla uses for entity
+ * name tags.
  */
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererMixin {
