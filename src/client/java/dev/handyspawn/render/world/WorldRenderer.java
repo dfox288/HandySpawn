@@ -32,6 +32,7 @@ public final class WorldRenderer {
             RenderContext ctx = new RenderContext(
                 fabricCtx.poseStack(),
                 mc.gameRenderer.getMainCamera(),
+                fabricCtx.levelState().cameraRenderState.orientation,
                 fabricCtx.bufferSource(),
                 fabricCtx.submitNodeCollector(),
                 mc.level,

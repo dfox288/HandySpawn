@@ -5,6 +5,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import org.joml.Quaternionf;
 
 /**
  * Per-frame bundle passed to each per-feature renderer and to {@link RenderPrimitives}.
@@ -18,6 +19,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
  */
 public record RenderContext(PoseStack poseStack,
                             Camera camera,
+                            Quaternionf cameraOrientation,
                             MultiBufferSource buffers,
                             SubmitNodeCollector collector,
                             ClientLevel level,

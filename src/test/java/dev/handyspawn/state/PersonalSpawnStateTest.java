@@ -64,7 +64,7 @@ class PersonalSpawnStateTest {
     }
 
     @Test
-    void emptyPayloadClearsBothSlots() {
+    void emptyPayloadClearsCurrent() {
         PersonalSpawnState s = new PersonalSpawnState();
         BlockPos pos = new BlockPos(1, 64, 1);
         s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, false);
@@ -73,6 +73,23 @@ class PersonalSpawnStateTest {
 
         assertTrue(s.current().isEmpty());
         assertTrue(s.destroyedAt().isEmpty());
+    }
+
+    @Test
+    void emptyPayloadAfterDestroyedPreservesGhostMarker() {
+        // Vanilla clears the server-side respawn config right after a bed break,
+        // which triggers a redundant empty payload on the heels of the
+        // destroyed=true one we send explicitly. The client must preserve the
+        // destroyed record, otherwise the ghost marker never renders.
+        PersonalSpawnState s = new PersonalSpawnState();
+        BlockPos pos = new BlockPos(1, 64, 1);
+        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, true);
+
+        s.applyPayload(Optional.empty(), Optional.empty(), PersonalSpawnKind.BED, false);
+
+        assertTrue(s.current().isEmpty());
+        PersonalSpawnState.Record dest = s.destroyedAt().orElseThrow();
+        assertEquals(pos, dest.pos());
     }
 
     @Test

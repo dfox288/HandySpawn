@@ -53,9 +53,10 @@ public final class RenderPrimitives {
      * argb value Font expects. {@code throughWalls} selects
      * {@link Font.DisplayMode} between {@code NORMAL} and {@code SEE_THROUGH}.
      */
-    // Rate-limit render-path logs: print once every N calls per glyph.
-    private static int debugCallCounter = 0;
-    private static final int DEBUG_LOG_EVERY_N = 120;
+    // DEBUG (kept commented for future diagnosis): per-glyph call-rate log used
+    // while hunting the world-space text silent-render bug in v0.2.0.
+    // private static int debugCallCounter = 0;
+    // private static final int DEBUG_LOG_EVERY_N = 120;
 
     public static void billboardGlyph(RenderContext ctx,
                                       Vec3 pos,
@@ -67,11 +68,11 @@ public final class RenderPrimitives {
         PoseStack ps = ctx.poseStack();
         Vec3 cam = ctx.camera().position();
 
-        if ((debugCallCounter++ % DEBUG_LOG_EVERY_N) == 0) {
-            dev.handyspawn.HandySpawnConstants.LOG.info(
-                "[billboard] glyph='{}' worldPos={} camPos={} mode={}",
-                glyph, pos, cam, throughWalls ? "SEE_THROUGH" : "NORMAL");
-        }
+        // if ((debugCallCounter++ % DEBUG_LOG_EVERY_N) == 0) {
+        //     dev.handyspawn.HandySpawnConstants.LOG.info(
+        //         "[billboard] glyph='{}' worldPos={} camPos={} mode={}",
+        //         glyph, pos, cam, throughWalls ? "SEE_THROUGH" : "NORMAL");
+        // }
 
         // Rendering idiom borrowed from sibling mod HandyBookshelf's
         // ChiseledBookshelfRenderer.submit() (name-tag branch): translate to
@@ -86,9 +87,14 @@ public final class RenderPrimitives {
                 (float) (pos.x - cam.x),
                 (float) (pos.y - cam.y),
                 (float) (pos.z - cam.z));
-            ps.mulPose(ctx.camera().rotation());
+            // Match vanilla NameTagFeatureRenderer$Storage.add exactly:
+            // billboard via CameraRenderState.orientation and scale(+s, -s, +s).
+            // Our previous scale of (-s, -s, s) X-mirrored the text quad, which
+            // made its triangles face away from the camera — the font render
+            // pipeline then silently culled them (no crash, no pixels).
+            ps.mulPose(ctx.cameraOrientation());
             float s = 0.025f * size;
-            ps.scale(-s, -s, s);
+            ps.scale(s, -s, s);
 
             FormattedCharSequence fcs = Component.literal(glyph).getVisualOrderText();
             // submitText expects the text origin and takes the width-centred x
@@ -175,17 +181,32 @@ public final class RenderPrimitives {
     }
 
     /**
-     * Draw a translucent tint quad on the top face of a block.
+     * Draw a translucent tint quad over a bed mattress, with a gentle alpha
+     * pulse so it reads as a highlight rather than a static ghost rectangle.
      *
-     * <p>First-pass quality: offsets the quad by +0.001 y to try to avoid
-     * z-fighting with the block surface. This may still flicker slightly on
-     * some GPUs / viewing angles — a polish task can add polygon-offset or
-     * a dedicated render layer.
+     * <p>Height: the vanilla bed mattress top sits at {@code y = 9/16}; we
+     * render at {@code 9/16 + 0.003} so the quad hugs the mattress surface
+     * instead of floating a full block above it (the previous {@code +1.001}
+     * looked like a detached sign). The tiny offset avoids z-fighting with
+     * the mattress texture without needing a dedicated polygon-offset layer.
+     *
+     * <p>Pulse: alpha multiplied by a sin-driven factor that oscillates
+     * between {@link #PULSE_MIN} and {@link #PULSE_MAX} on a {@link #PULSE_PERIOD_MS}
+     * cycle. Time source is {@link System#currentTimeMillis()} — frame-rate
+     * independent, no state kept.
      */
+    private static final float PULSE_MIN = 0.55f;
+    private static final float PULSE_MAX = 1.00f;
+    private static final long  PULSE_PERIOD_MS = 1800L;
+
     public static void topFaceTint(RenderContext ctx, BlockPos pos, int argb) {
         PoseStack ps = ctx.poseStack();
         Vec3 cam = ctx.camera().position();
-        int a = (argb >>> 24) & 0xff;
+
+        double phase = (System.currentTimeMillis() % PULSE_PERIOD_MS) / (double) PULSE_PERIOD_MS;
+        float pulse = PULSE_MIN
+            + (PULSE_MAX - PULSE_MIN) * (0.5f + 0.5f * (float) Math.sin(phase * 2 * Math.PI));
+        int a = clamp8(Math.round(((argb >>> 24) & 0xff) * pulse));
         int r = (argb >>> 16) & 0xff;
         int g = (argb >>>  8) & 0xff;
         int b =  argb         & 0xff;
@@ -194,7 +215,7 @@ public final class RenderPrimitives {
         try {
             ps.translate(
                 (float) (pos.getX() - cam.x),
-                (float) (pos.getY() - cam.y + 1.001),
+                (float) (pos.getY() - cam.y + 9f / 16f + 0.003f),
                 (float) (pos.getZ() - cam.z));
 
             VertexConsumer vc = ctx.buffers().getBuffer(RenderTypes.debugFilledBox());

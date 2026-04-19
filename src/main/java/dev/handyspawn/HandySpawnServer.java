@@ -11,14 +11,11 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.LevelData;
 
 /**
@@ -56,41 +53,17 @@ public final class HandySpawnServer implements ModInitializer {
             }
         });
 
-        // When a bed or respawn anchor is destroyed, any player whose personal
-        // spawn was bound to exactly that position needs to be notified and
-        // have their server-side respawn cleared. Otherwise vanilla will still
-        // try to respawn them at the missing block on next death, and the
-        // client-side marker overlay will lag behind reality.
-        //
-        // Bed subtlety: vanilla records a player's spawn at the HEAD of the
-        // bed, but a player can break either half. Breaking the HEAD gives us
-        // a direct pos-equals check. Breaking the FOOT does not — we have to
-        // resolve the FOOT's partner (= HEAD) from the state's FACING, and
-        // compare THAT to each player's spawn pos. Post-break world-state
-        // checks were unreliable in practice (the HEAD's updateShape-driven
-        // removal is synchronous in setBlock, but any mod or later hook that
-        // swaps the block back — or a FOOT without a resolvable HEAD neighbor
-        // — defeats it). Comparing against both the broken pos and its
-        // computed partner pos is robust by construction.
+        // Respawn-anchor destruction detection. Bed destruction is handled
+        // separately by BedBlockMixin — Fabric's PlayerBlockBreakEvents.AFTER
+        // turned out to be unreliable for bed FOOT-half breaks in MC 26.1.2
+        // (a FOOT click in survival did not dispatch the event), so we hook
+        // BedBlock.playerWillDestroy directly. Anchors are a single block and
+        // the event fires reliably for them, so we keep this lightweight path.
         PlayerBlockBreakEvents.AFTER.register((world, breaker, pos, state, blockEntity) -> {
-            boolean isBed = state.getBlock() instanceof BedBlock;
-            boolean isAnchor = state.getBlock() instanceof RespawnAnchorBlock;
-            if (!isBed && !isAnchor) return;
+            if (!(state.getBlock() instanceof RespawnAnchorBlock)) return;
             if (!(world instanceof ServerLevel serverLevel)) return;
 
-            HandySpawnConstants.LOG.info(
-                "[break] block={} pos={} bed={} anchor={} breaker={}",
-                state.getBlock().getClass().getSimpleName(), pos, isBed, isAnchor,
-                breaker == null ? "null" : breaker.getName().getString());
-
             ResourceKey<Level> worldKey = serverLevel.dimension();
-
-            // Pre-compute all positions a player's spawnPos could match for
-            // this break event. For a bed: the broken pos plus the partner
-            // pos (derived from the state's PART + FACING). For an anchor:
-            // just the broken pos.
-            BlockPos partnerPos = isBed ? bedPartnerPos(pos, state) : null;
-
             for (ServerPlayer p : serverLevel.getServer().getPlayerList().getPlayers()) {
                 ServerPlayer.RespawnConfig rc = p.getRespawnConfig();
                 if (rc == null) continue;
@@ -99,42 +72,12 @@ public final class HandySpawnServer implements ModInitializer {
                 BlockPos spawnPos = data.pos();
                 ResourceKey<Level> spawnDim = data.dimension();
                 if (!worldKey.equals(spawnDim)) continue;
+                if (!spawnPos.equals(pos)) continue;
 
-                boolean hit = spawnPos.equals(pos)
-                           || (partnerPos != null && spawnPos.equals(partnerPos));
-                HandySpawnConstants.LOG.info(
-                    "[break] player={} spawnPos={} brokenPos={} partnerPos={} hit={}",
-                    p.getName().getString(), spawnPos, pos, partnerPos, hit);
-                if (!hit) continue;
-
-                PersonalSpawnKind kind = isAnchor
-                    ? PersonalSpawnKind.RESPAWN_ANCHOR
-                    : PersonalSpawnKind.BED;
-                SpawnBroadcaster.broadcastDestroyed(p, spawnPos, spawnDim, kind);
-                // Pass null to clear; vanilla's setRespawnPosition treats a
-                // null config as a clear (and the false flag suppresses the
-                // "spawn point set" chat message).
+                SpawnBroadcaster.broadcastDestroyed(p, spawnPos, spawnDim, PersonalSpawnKind.RESPAWN_ANCHOR);
                 p.setRespawnPosition(null, false);
             }
         });
-    }
-
-    /**
-     * Given a broken bed's pos + state, returns the pos of the OTHER half of
-     * the bed (HEAD if {@code state} is the FOOT half, FOOT if HEAD). Uses the
-     * block state's own FACING/PART values so we don't have to query the world
-     * — this is essential since our caller runs after the break and the
-     * neighbor half may already be gone. Returns null if the state isn't a
-     * bed state (defensive; caller already checks for BedBlock).
-     */
-    private static BlockPos bedPartnerPos(BlockPos pos, BlockState state) {
-        if (!(state.getBlock() instanceof BedBlock)) return null;
-        // BedBlock.getConnectedDirection(state) returns the direction pointing
-        // from the current block TO its other half, irrespective of which
-        // half the current block is (it inverts FACING for the HEAD half so
-        // the caller doesn't have to care).
-        Direction toPartner = BedBlock.getConnectedDirection(state);
-        return pos.relative(toPartner);
     }
 
     /**

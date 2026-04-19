@@ -24,7 +24,16 @@ public abstract class ServerPlayerMixin {
         method = "setRespawnPosition(Lnet/minecraft/server/level/ServerPlayer$RespawnConfig;Z)V",
         at = @At("TAIL")
     )
-    private void handyspawn$broadcastAfterSpawnChange(CallbackInfo ci) {
+    private void handyspawn$broadcastAfterSpawnChange(ServerPlayer.RespawnConfig config,
+                                                      boolean notifyClient,
+                                                      CallbackInfo ci) {
+        // Skip the broadcast when vanilla clears the respawn config to null —
+        // that always follows a bed break, and the PlayerBlockBreakEvents.AFTER
+        // path already sent an explicit destroyed=true payload via
+        // SpawnBroadcaster.broadcastDestroyed. Broadcasting an empty payload
+        // here would race with (and clobber) the destroyed record the client
+        // just latched, preventing the ghost marker from rendering.
+        if (config == null) return;
         SpawnBroadcaster.broadcastPersonalSpawn((ServerPlayer) (Object) this);
     }
 }

@@ -21,17 +21,17 @@ public final class ForceloadHud {
     private static final Identifier SPRITE =
         Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "textures/gui/icons/forceload.png");
 
-    public static void render(GuiGraphicsExtractor ctx) {
-        if (!HandySpawnConfig.get().forceloadBadge) return;
+    public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
+        if (!HandySpawnConfig.get().forceloadBadge) return y;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.player == null || mc.level == null) return;
+        if (mc == null || mc.player == null || mc.level == null) return y;
 
         ChunkPos here = ChunkPos.containing(mc.player.blockPosition());
-        if (!HandySpawn.forceload().containsChunk(mc.level.dimension(), here)) return;
+        if (!HandySpawn.forceload().containsChunk(mc.level.dimension(), here)) return y;
 
-        int x = HudPrimitives.screenWidth() - 24;
-        int y = 4;
-        HudPrimitives.drawIconAt(ctx, SPRITE, x, y, 16);
+        int iconSize = 16;
+        HudPrimitives.drawIconAt(ctx, SPRITE, rightEdgeX - iconSize, y, iconSize);
+        return y + iconSize + 2;
     }
 
     private ForceloadHud() {}

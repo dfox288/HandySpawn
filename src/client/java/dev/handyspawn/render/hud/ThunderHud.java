@@ -12,19 +12,19 @@ public final class ThunderHud {
     private static final Identifier SPRITE =
         Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "textures/gui/icons/thunder_sleep.png");
 
-    public static void render(GuiGraphicsExtractor ctx) {
-        if (!HandySpawnConfig.get().daytimeThunderstormHint) return;
+    public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
+        if (!HandySpawnConfig.get().daytimeThunderstormHint) return y;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.level == null) return;
+        if (mc == null || mc.level == null) return y;
         Level w = mc.level;
 
         // Only surface when daytime AND thundering — the non-obvious sleep window.
-        if (w.isDarkOutside()) return;     // night: user already knows they can sleep
-        if (!w.isThundering()) return;     // no thunder: can't sleep at all
+        if (w.isDarkOutside()) return y;     // night: user already knows they can sleep
+        if (!w.isThundering()) return y;     // no thunder: can't sleep at all
 
-        int x = 4;
-        int y = HudPrimitives.screenHeight() - 60;
-        HudPrimitives.drawIconAt(ctx, SPRITE, x, y, 16);
+        int iconSize = 16;
+        HudPrimitives.drawIconAt(ctx, SPRITE, rightEdgeX - iconSize, y, iconSize);
+        return y + iconSize + 2;
     }
 
     private ThunderHud() {}

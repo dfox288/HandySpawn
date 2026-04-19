@@ -30,9 +30,17 @@ public final class HudPrimitives {
     /**
      * Draws a whole texture ({@code size x size}) at {@code (x, y)} using UV (0,0)-(1,1).
      * Texture must be the full sprite — this helper does not slice an atlas.
+     *
+     * <p><b>MC 26.1.2 gotcha:</b> {@link GuiGraphicsExtractor#blit(Identifier, int, int,
+     * int, int, float, float, float, float)} takes the four ints as corners
+     * {@code (x1, y1, x2, y2)}, not {@code (x, y, w, h)} like older versions.
+     * Passing {@code (x, y, size, size)} draws from {@code (x, y)} to
+     * {@code (size, size)} — a tiny/negative rectangle that disappears off-screen.
+     * We compute the second corner here so callers keep the familiar
+     * {@code (x, y, size)} signature.
      */
     public static void drawIconAt(GuiGraphicsExtractor ctx, Identifier sprite, int x, int y, int size) {
-        ctx.blit(sprite, x, y, size, size, 0.0F, 1.0F, 0.0F, 1.0F);
+        ctx.blit(sprite, x, y, x + size, y + size, 0.0F, 1.0F, 0.0F, 1.0F);
     }
 
     /**
@@ -41,6 +49,22 @@ public final class HudPrimitives {
     public static void drawTextAt(GuiGraphicsExtractor ctx, Component text, int x, int y, int argb) {
         Font font = Minecraft.getInstance().font;
         ctx.text(font, text, x, y, argb, true);
+    }
+
+    /**
+     * Draws a {@link Component} right-aligned so the last character sits at
+     * {@code rightEdgeX}. Used by the top-right HUD rail so every row anchors
+     * to the same vertical edge regardless of content width.
+     */
+    public static void drawTextRightAligned(GuiGraphicsExtractor ctx, Component text, int rightEdgeX, int y, int argb) {
+        Font font = Minecraft.getInstance().font;
+        int w = font.width(text);
+        ctx.text(font, text, rightEdgeX - w, y, argb, true);
+    }
+
+    /** Pixel height of one text row (font line height + 1px leading). */
+    public static int textRowHeight() {
+        return Minecraft.getInstance().font.lineHeight + 1;
     }
 
     /** Scaled GUI width (what the vanilla HUD sees). */

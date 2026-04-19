@@ -43,10 +43,23 @@ public final class PersonalSpawnState {
             current = new Record(pos.get(), dim.get(), kind);
             destroyed = null;
         } else {
-            // Empty payload — player has no spawn right now.
+            // Empty payload — the player has no current spawn. Preserve any
+            // destroyed record the client may have just latched: a
+            // destroyed=true broadcast followed by an empty one is the
+            // expected sequence when vanilla clears the respawn config after
+            // a bed break, and clobbering `destroyed` here would prevent the
+            // ghost marker from ever rendering. A fresh "current" payload
+            // (branch above) is what properly clears the destroyed slot.
             current = null;
-            destroyed = null;
         }
+        // DIAG (bed-break HOME-persists bug, 2026-04-19): log resulting state
+        // on every payload so we can correlate renderer observations with state.
+        dev.handyspawn.HandySpawnConstants.LOG.info(
+            "[apply] rx pos={} destroyed_flag={} => current={} destroyed={}",
+            pos.map(Object::toString).orElse("empty"),
+            isDestroyed,
+            current == null ? "null" : current.pos().toString(),
+            destroyed == null ? "null" : destroyed.pos().toString());
     }
 
     public void clear() {
