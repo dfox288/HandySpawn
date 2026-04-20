@@ -130,17 +130,43 @@ public final class RenderPrimitives {
     }
 
     /**
-     * Draw a chunk-aligned wireframe box spanning the world's full build height.
+     * Draw four translucent vertical walls around a force-loaded chunk.
      *
-     * <p>First-pass quality: emits all 12 edges (4 vertical + 4 top + 4 bottom).
+     * <p>Each chunk gets a full-height column (minY → maxY) whose four side
+     * faces are rendered as low-alpha quads. Reads as a glass box framing the
+     * chunk — the same footprint as the old wireframe beams, but with filled
+     * faces so the loaded area is visible through terrain at a distance.
+     *
+     * <p>Each wall is emitted twice (both windings) so the player sees it from
+     * outside AND inside the loaded region. Backface-culling is on for
+     * {@link RenderTypes#debugFilledBox()}, so a single-winding quad would
+     * vanish from one side.
+     *
+     * <p>Using {@link RenderTypes#debugFilledBox()} — the proven untextured
+     * translucent layer. {@code RenderTypes.translucent()} is the block-terrain
+     * layer and silently drops vertices missing UV/lightmap.
      */
-    public static void chunkWireframe(RenderContext ctx, int chunkX, int chunkZ, int argb) {
+    public static void forceLoadSurface(RenderContext ctx, int chunkX, int chunkZ,
+                                        int fillArgb, int edgeArgb,
+                                        boolean drawNorth, boolean drawSouth,
+                                        boolean drawWest,  boolean drawEast) {
+        // Any wall shared with an adjacent force-loaded chunk is suppressed by
+        // the caller (drawN/S/W/E = false). That serves two purposes: (1)
+        // contiguous regions render as one continuous hollow column rather
+        // than a stack of boxes, and (2) the double-opacity artifact at shared
+        // seams — two back-to-back quads with alpha-blending — is eliminated.
+        if (!drawNorth && !drawSouth && !drawWest && !drawEast) return;
+
         PoseStack ps = ctx.poseStack();
         Vec3 cam = ctx.camera().position();
-        float a = ((argb >>> 24) & 0xff) / 255f;
-        float r = ((argb >>> 16) & 0xff) / 255f;
-        float g = ((argb >>>  8) & 0xff) / 255f;
-        float b = ( argb         & 0xff) / 255f;
+        float fa = ((fillArgb >>> 24) & 0xff) / 255f;
+        float fr = ((fillArgb >>> 16) & 0xff) / 255f;
+        float fg = ((fillArgb >>>  8) & 0xff) / 255f;
+        float fb = ( fillArgb         & 0xff) / 255f;
+        float ea = ((edgeArgb >>> 24) & 0xff) / 255f;
+        float er = ((edgeArgb >>> 16) & 0xff) / 255f;
+        float eg = ((edgeArgb >>>  8) & 0xff) / 255f;
+        float eb = ( edgeArgb         & 0xff) / 255f;
 
         int minY = ctx.level() != null ? ctx.level().getMinY() : -64;
         int maxY = ctx.level() != null ? ctx.level().getMaxY() : 320;
@@ -151,33 +177,85 @@ public final class RenderPrimitives {
                 (float) (chunkX * 16 - cam.x),
                 (float) (-cam.y),
                 (float) (chunkZ * 16 - cam.z));
-            VertexConsumer vc = ctx.buffers().getBuffer(RenderTypes.lines());
+
             PoseStack.Pose pose = ps.last();
 
-            float x0 = 0f, x1 = 16f;
-            float z0 = 0f, z1 = 16f;
             float y0 = minY, y1 = maxY;
 
-            // 4 vertical edges (normal = up).
-            line(vc, pose, x0, y0, z0, x0, y1, z0, r, g, b, a, 0f, 1f, 0f);
-            line(vc, pose, x1, y0, z0, x1, y1, z0, r, g, b, a, 0f, 1f, 0f);
-            line(vc, pose, x1, y0, z1, x1, y1, z1, r, g, b, a, 0f, 1f, 0f);
-            line(vc, pose, x0, y0, z1, x0, y1, z1, r, g, b, a, 0f, 1f, 0f);
-
-            // 4 bottom edges (normals on the XZ plane).
-            line(vc, pose, x0, y0, z0, x1, y0, z0, r, g, b, a, 1f, 0f, 0f);
-            line(vc, pose, x1, y0, z0, x1, y0, z1, r, g, b, a, 0f, 0f, 1f);
-            line(vc, pose, x1, y0, z1, x0, y0, z1, r, g, b, a, 1f, 0f, 0f);
-            line(vc, pose, x0, y0, z1, x0, y0, z0, r, g, b, a, 0f, 0f, 1f);
-
-            // 4 top edges.
-            line(vc, pose, x0, y1, z0, x1, y1, z0, r, g, b, a, 1f, 0f, 0f);
-            line(vc, pose, x1, y1, z0, x1, y1, z1, r, g, b, a, 0f, 0f, 1f);
-            line(vc, pose, x1, y1, z1, x0, y1, z1, r, g, b, a, 1f, 0f, 0f);
-            line(vc, pose, x0, y1, z1, x0, y1, z0, r, g, b, a, 0f, 0f, 1f);
+            // Buffer-source gotcha (MC 26.1.2): MultiBufferSource.getBuffer()
+            // finalises the previously-open BufferBuilder when the caller asks
+            // for a *different* render type. Holding two VertexConsumers
+            // simultaneously and writing to them interleaved crashes with
+            // "BufferBuilder: Not building!". So we do all fill writes first
+            // in one block, then all line writes in a second block, and never
+            // interleave them.
+            // Minecraft axis convention: -Z = north, +Z = south, -X = west, +X = east.
+            {
+                VertexConsumer fillVc = ctx.buffers().getBuffer(RenderTypes.debugFilledBox());
+                if (drawNorth) wall(fillVc, pose, 0f, y0, 0f,   16f, y0, 0f,   16f, y1, 0f,   0f, y1, 0f,   fr, fg, fb, fa, 0f, 0f, -1f);
+                if (drawSouth) wall(fillVc, pose, 0f, y0, 16f,  0f, y1, 16f,   16f, y1, 16f,  16f, y0, 16f, fr, fg, fb, fa, 0f, 0f,  1f);
+                if (drawWest)  wall(fillVc, pose, 0f, y0, 0f,   0f, y1, 0f,    0f, y1, 16f,   0f, y0, 16f,  fr, fg, fb, fa, -1f, 0f, 0f);
+                if (drawEast)  wall(fillVc, pose, 16f, y0, 0f,  16f, y0, 16f,  16f, y1, 16f,  16f, y1, 0f,  fr, fg, fb, fa,  1f, 0f, 0f);
+            }
+            // Each drawn wall gets a perimeter outline (4 edges) so the chunk
+            // boundary stays readable even when the translucent fill washes out
+            // against distant terrain. Shared vertical corner edges double-draw
+            // at region corners — harmless, reads as a brighter post.
+            {
+                VertexConsumer lineVc = ctx.buffers().getBuffer(RenderTypes.lines());
+                if (drawNorth) {
+                    line(lineVc, pose, 0f,  y0, 0f,  16f, y0, 0f,  er, eg, eb, ea, 1f, 0f, 0f);
+                    line(lineVc, pose, 0f,  y1, 0f,  16f, y1, 0f,  er, eg, eb, ea, 1f, 0f, 0f);
+                    line(lineVc, pose, 0f,  y0, 0f,  0f,  y1, 0f,  er, eg, eb, ea, 0f, 1f, 0f);
+                    line(lineVc, pose, 16f, y0, 0f,  16f, y1, 0f,  er, eg, eb, ea, 0f, 1f, 0f);
+                }
+                if (drawSouth) {
+                    line(lineVc, pose, 0f,  y0, 16f,  16f, y0, 16f,  er, eg, eb, ea, 1f, 0f, 0f);
+                    line(lineVc, pose, 0f,  y1, 16f,  16f, y1, 16f,  er, eg, eb, ea, 1f, 0f, 0f);
+                    line(lineVc, pose, 0f,  y0, 16f,  0f,  y1, 16f,  er, eg, eb, ea, 0f, 1f, 0f);
+                    line(lineVc, pose, 16f, y0, 16f,  16f, y1, 16f,  er, eg, eb, ea, 0f, 1f, 0f);
+                }
+                if (drawWest) {
+                    line(lineVc, pose, 0f, y0, 0f,   0f, y0, 16f,   er, eg, eb, ea, 0f, 0f, 1f);
+                    line(lineVc, pose, 0f, y1, 0f,   0f, y1, 16f,   er, eg, eb, ea, 0f, 0f, 1f);
+                    line(lineVc, pose, 0f, y0, 0f,   0f, y1, 0f,    er, eg, eb, ea, 0f, 1f, 0f);
+                    line(lineVc, pose, 0f, y0, 16f,  0f, y1, 16f,   er, eg, eb, ea, 0f, 1f, 0f);
+                }
+                if (drawEast) {
+                    line(lineVc, pose, 16f, y0, 0f,  16f, y0, 16f,  er, eg, eb, ea, 0f, 0f, 1f);
+                    line(lineVc, pose, 16f, y1, 0f,  16f, y1, 16f,  er, eg, eb, ea, 0f, 0f, 1f);
+                    line(lineVc, pose, 16f, y0, 0f,  16f, y1, 0f,   er, eg, eb, ea, 0f, 1f, 0f);
+                    line(lineVc, pose, 16f, y0, 16f, 16f, y1, 16f,  er, eg, eb, ea, 0f, 1f, 0f);
+                }
+            }
         } finally {
             ps.popPose();
         }
+    }
+
+    /**
+     * Emit one filled wall as two quads with opposite winding so it renders
+     * from either side under backface culling. {@code debugFilledBox} is the
+     * target render layer; the reversed-winding quad uses a negated normal to
+     * match its lighting expectation.
+     */
+    private static void wall(VertexConsumer vc, PoseStack.Pose pose,
+                             float ax, float ay, float az,
+                             float bx, float by, float bz,
+                             float cx, float cy, float cz,
+                             float dx, float dy, float dz,
+                             float r, float g, float b, float alpha,
+                             float nx, float ny, float nz) {
+        // Outward-facing quad.
+        vc.addVertex(pose, ax, ay, az).setColor(r, g, b, alpha).setNormal(pose, nx, ny, nz);
+        vc.addVertex(pose, bx, by, bz).setColor(r, g, b, alpha).setNormal(pose, nx, ny, nz);
+        vc.addVertex(pose, cx, cy, cz).setColor(r, g, b, alpha).setNormal(pose, nx, ny, nz);
+        vc.addVertex(pose, dx, dy, dz).setColor(r, g, b, alpha).setNormal(pose, nx, ny, nz);
+        // Reversed winding (for view from behind) with negated normal.
+        vc.addVertex(pose, dx, dy, dz).setColor(r, g, b, alpha).setNormal(pose, -nx, -ny, -nz);
+        vc.addVertex(pose, cx, cy, cz).setColor(r, g, b, alpha).setNormal(pose, -nx, -ny, -nz);
+        vc.addVertex(pose, bx, by, bz).setColor(r, g, b, alpha).setNormal(pose, -nx, -ny, -nz);
+        vc.addVertex(pose, ax, ay, az).setColor(r, g, b, alpha).setNormal(pose, -nx, -ny, -nz);
     }
 
     /**

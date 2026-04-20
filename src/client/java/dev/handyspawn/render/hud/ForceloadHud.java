@@ -5,6 +5,7 @@ import dev.handyspawn.HandySpawnConstants;
 import dev.handyspawn.config.HandySpawnConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 
@@ -21,6 +22,8 @@ public final class ForceloadHud {
     private static final Identifier SPRITE =
         Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "textures/gui/icons/forceload.png");
 
+    private static final int LABEL_ARGB = 0xFF40E0FF; // matches the in-world INSIDE tint.
+
     public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
         if (!HandySpawnConfig.get().forceloadBadge) return y;
         Minecraft mc = Minecraft.getInstance();
@@ -29,8 +32,14 @@ public final class ForceloadHud {
         ChunkPos here = ChunkPos.containing(mc.player.blockPosition());
         if (!HandySpawn.forceload().containsChunk(mc.level.dimension(), here)) return y;
 
+        // Icon on the right edge, text label to its left so the whole row
+        // reads as "FORCELOADED [icon]" aligned to the rail's right edge.
         int iconSize = 16;
-        HudPrimitives.drawIconAt(ctx, SPRITE, rightEdgeX - iconSize, y, iconSize);
+        int iconX = rightEdgeX - iconSize;
+        HudPrimitives.drawIconAt(ctx, SPRITE, iconX, y, iconSize);
+        Component label = Component.translatable("hud.handyspawn.forceload_inside");
+        int textY = y + (iconSize - mc.font.lineHeight) / 2;
+        HudPrimitives.drawTextRightAligned(ctx, label, iconX - 3, textY, LABEL_ARGB);
         return y + iconSize + 2;
     }
 

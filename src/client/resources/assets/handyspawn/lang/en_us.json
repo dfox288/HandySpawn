@@ -17,5 +17,7 @@
 
   "handyspawn.config.worldSpawnMarker": "Mark world-spawn block",
   "handyspawn.config.forceloadBadge": "HUD badge when in a forceloaded chunk",
-  "handyspawn.config.forceloadBorderOverlay": "Chunk-border overlay for forceloaded chunks"
+  "handyspawn.config.forceloadBorderOverlay": "Chunk-border overlay for forceloaded chunks",
+
+  "hud.handyspawn.forceload_inside": "FORCELOADED"
 }

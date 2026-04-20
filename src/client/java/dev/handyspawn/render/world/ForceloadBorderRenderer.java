@@ -7,8 +7,13 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.world.level.ChunkPos;
 
 /**
- * F9 — draws an orange chunk-border wireframe around every chunk currently
- * marked via {@code /forceload add} in the active dimension.
+ * F9 — draws translucent orange walls around every force-loaded chunk.
+ *
+ * <p>Each chunk renders as four full-height vertical quads (minY → maxY),
+ * giving the same footprint as the old wireframe beams but as filled, mostly
+ * transparent faces. Adjacent force-loaded chunks' walls overlap along
+ * shared edges — that doubled tint is intentional and reads as a brighter
+ * seam along the chunk grid.
  *
  * <p>Data comes from {@link dev.handyspawn.state.SharedForceloadState}, which
  * is populated by {@link dev.handyspawn.net.ForceloadSyncPayload} broadcasts
@@ -22,8 +27,14 @@ import net.minecraft.world.level.ChunkPos;
  */
 public final class ForceloadBorderRenderer {
 
-    /** Opaque orange — matches the F9 spec colour. */
-    private static final int COLOUR_ARGB = 0xFFFF9030;
+    // Two tint schemes so the player reads "I am / am not inside a loaded
+    // chunk" from the colour of the wall in front of them, independent of the
+    // HUD badge. Both use translucent fills with a brighter, higher-alpha
+    // outline colour for the perimeter edges.
+    private static final int OUTSIDE_FILL = 0x30FF9030; // orange
+    private static final int OUTSIDE_EDGE = 0xE0FF9030;
+    private static final int INSIDE_FILL  = 0x3040E0FF; // cyan
+    private static final int INSIDE_EDGE  = 0xE040E0FF;
 
     public static void render(RenderContext ctx) {
         if (!HandySpawnConfig.get().forceloadBorderOverlay) return;
@@ -32,10 +43,28 @@ public final class ForceloadBorderRenderer {
         LongSet chunks = HandySpawn.forceload().forceloadedChunks(ctx.level().dimension());
         if (chunks.isEmpty()) return;
 
+        // "Inside" means the camera's chunk is itself force-loaded. Using
+        // camera (not player) position so the colour tracks F5 third-person
+        // and spectator view as the user expects.
+        int camCx = (int) Math.floor(ctx.camera().position().x) >> 4;
+        int camCz = (int) Math.floor(ctx.camera().position().z) >> 4;
+        boolean inside = chunks.contains(ChunkPos.pack(camCx, camCz));
+        int fill = inside ? INSIDE_FILL : OUTSIDE_FILL;
+        int edge = inside ? INSIDE_EDGE : OUTSIDE_EDGE;
+
         LongIterator it = chunks.iterator();
         while (it.hasNext()) {
             long packed = it.nextLong();
-            RenderPrimitives.chunkWireframe(ctx, ChunkPos.getX(packed), ChunkPos.getZ(packed), COLOUR_ARGB);
+            int cx = ChunkPos.getX(packed);
+            int cz = ChunkPos.getZ(packed);
+            // Suppress a wall where the adjacent chunk is also loaded, so
+            // contiguous regions render as one continuous hollow column.
+            boolean drawNorth = !chunks.contains(ChunkPos.pack(cx,     cz - 1));
+            boolean drawSouth = !chunks.contains(ChunkPos.pack(cx,     cz + 1));
+            boolean drawWest  = !chunks.contains(ChunkPos.pack(cx - 1, cz    ));
+            boolean drawEast  = !chunks.contains(ChunkPos.pack(cx + 1, cz    ));
+            RenderPrimitives.forceLoadSurface(ctx, cx, cz, fill, edge,
+                drawNorth, drawSouth, drawWest, drawEast);
         }
     }
 
