@@ -11,6 +11,7 @@ gradle.properties.local
 
 # Minecraft run directory
 run/
+logs/
 
 # OS
 .DS_Store
