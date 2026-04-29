@@ -31,9 +31,8 @@ public final class WorldRenderer {
             if (mc.level == null) return;
             RenderContext ctx = new RenderContext(
                 fabricCtx.poseStack(),
-                mc.gameRenderer.getMainCamera(),
+                mc.gameRenderer.mainCamera(),
                 fabricCtx.levelState().cameraRenderState.orientation,
-                fabricCtx.bufferSource(),
                 fabricCtx.submitNodeCollector(),
                 mc.level,
                 mc.getDeltaTracker().getGameTimeDeltaTicks()
