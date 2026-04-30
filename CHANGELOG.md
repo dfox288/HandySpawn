@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-beta.2
+
+### Internal (no user-facing impact)
+- Java package moved from `dev.handyspawn` to `dev.handy.mods.handyspawn` to match the rest of the Handy series convention.
+- Mixin config renamed from `handyspawn.main.mixins.json` to `handyspawn.mixins.json` (drops the `.main.` infix; aligns with sibling mods).
+
 ## 0.2.0 — 2026-04-18
 
 ### New

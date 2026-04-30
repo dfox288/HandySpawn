@@ -15,18 +15,18 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "dev.handyspawn.HandySpawnServer"
+            "dev.handy.mods.handyspawn.HandySpawnServer"
         ],
         "client": [
-            "dev.handyspawn.HandySpawn"
+            "dev.handy.mods.handyspawn.HandySpawn"
         ],
         "modmenu": [
-            "dev.handyspawn.compat.ModMenuIntegration"
+            "dev.handy.mods.handyspawn.compat.ModMenuIntegration"
         ]
     },
     "mixins": [
         { "config": "handyspawn.client.mixins.json", "environment": "client" },
-        "handyspawn.main.mixins.json"
+        "handyspawn.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=0.19.2",

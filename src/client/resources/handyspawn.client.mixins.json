@@ -1,6 +1,6 @@
 {
     "required": true,
-    "package": "dev.handyspawn.mixin",
+    "package": "dev.handy.mods.handyspawn.mixin",
     "compatibilityLevel": "JAVA_25",
     "client": [],
     "injectors": { "defaultRequire": 1 }
