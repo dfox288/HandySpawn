@@ -21,26 +21,26 @@ import java.util.Optional;
  */
 public final class PersonalSpawnState {
 
-    public record Record(BlockPos pos, ResourceKey<Level> dimension, SpawnBlockKind kind) {}
+    public record Entry(BlockPos pos, ResourceKey<Level> dimension, SpawnBlockKind kind) {}
 
-    private Record current;
-    private Record destroyed;
+    private Entry current;
+    private Entry destroyed;
 
-    public Optional<Record> current() {
+    public Optional<Entry> current() {
         return Optional.ofNullable(current);
     }
 
-    public Optional<Record> destroyedAt() {
+    public Optional<Entry> destroyedAt() {
         return Optional.ofNullable(destroyed);
     }
 
     public void applyPayload(Optional<BlockPos> pos, Optional<ResourceKey<Level>> dim,
                              SpawnBlockKind kind, boolean isDestroyed) {
         if (isDestroyed && pos.isPresent() && dim.isPresent()) {
-            destroyed = new Record(pos.get(), dim.get(), kind);
+            destroyed = new Entry(pos.get(), dim.get(), kind);
             current = null;
         } else if (pos.isPresent() && dim.isPresent()) {
-            current = new Record(pos.get(), dim.get(), kind);
+            current = new Entry(pos.get(), dim.get(), kind);
             destroyed = null;
         } else {
             // Empty payload — the player has no current spawn. Preserve any

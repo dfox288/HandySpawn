@@ -30,7 +30,7 @@ class PersonalSpawnStateTest {
         BlockPos pos = new BlockPos(10, 64, -20);
         s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.BED, false);
 
-        PersonalSpawnState.Record cur = s.current().orElseThrow();
+        PersonalSpawnState.Entry cur = s.current().orElseThrow();
         assertEquals(pos, cur.pos());
         assertEquals(OVERWORLD, cur.dimension());
         assertEquals(SpawnBlockKind.BED, cur.kind());
@@ -43,7 +43,7 @@ class PersonalSpawnStateTest {
         BlockPos pos = new BlockPos(10, 64, -20);
         s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.RESPAWN_ANCHOR, true);
 
-        PersonalSpawnState.Record dest = s.destroyedAt().orElseThrow();
+        PersonalSpawnState.Entry dest = s.destroyedAt().orElseThrow();
         assertEquals(pos, dest.pos());
         assertEquals(OVERWORLD, dest.dimension());
         assertEquals(SpawnBlockKind.RESPAWN_ANCHOR, dest.kind());
@@ -88,7 +88,7 @@ class PersonalSpawnStateTest {
         s.applyPayload(Optional.empty(), Optional.empty(), SpawnBlockKind.BED, false);
 
         assertTrue(s.current().isEmpty());
-        PersonalSpawnState.Record dest = s.destroyedAt().orElseThrow();
+        PersonalSpawnState.Entry dest = s.destroyedAt().orElseThrow();
         assertEquals(pos, dest.pos());
     }
 
