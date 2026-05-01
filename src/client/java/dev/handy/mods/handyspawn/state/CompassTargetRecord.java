@@ -1,5 +1,6 @@
 package dev.handy.mods.handyspawn.state;
 
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -18,8 +19,8 @@ import net.minecraft.world.level.Level;
  * never synced to the client through this channel, so this record represents
  * the compass target only.
  */
-public record CompassTargetRecord(BlockPos pos, ResourceKey<Level> dimension, CompassTargetKind kind) {
-    public static CompassTargetRecord of(BlockPos pos, ResourceKey<Level> dim, CompassTargetKind kind) {
+public record CompassTargetRecord(BlockPos pos, ResourceKey<Level> dimension, SpawnBlockKind kind) {
+    public static CompassTargetRecord of(BlockPos pos, ResourceKey<Level> dim, SpawnBlockKind kind) {
         return new CompassTargetRecord(pos.immutable(), dim, kind);
     }
 }

@@ -1,6 +1,7 @@
 package dev.handy.mods.handyspawn.state;
 
 import com.google.gson.Gson;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import com.google.gson.GsonBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -91,6 +92,6 @@ public final class CompassTargetPersistence {
     private static CompassTargetRecord toRecord(Entry e) {
         Identifier id = Identifier.parse(e.dimension());
         ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION, id);
-        return CompassTargetRecord.of(new BlockPos(e.x(), e.y(), e.z()), dim, CompassTargetKind.valueOf(e.kind()));
+        return CompassTargetRecord.of(new BlockPos(e.x(), e.y(), e.z()), dim, SpawnBlockKind.valueOf(e.kind()));
     }
 }

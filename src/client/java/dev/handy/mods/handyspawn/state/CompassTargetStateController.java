@@ -1,5 +1,6 @@
 package dev.handy.mods.handyspawn.state;
 
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -92,7 +93,7 @@ public final class CompassTargetStateController {
 
         BlockPos spawnPos = respawn.pos();
         ResourceKey<Level> spawnDim = respawn.dimension();
-        CompassTargetKind kind = inferKindFromBlock(client, spawnPos, spawnDim);
+        SpawnBlockKind kind = inferKindFromBlock(client, spawnPos, spawnDim);
         CompassTargetRecord fresh = CompassTargetRecord.of(spawnPos, spawnDim, kind);
         if (state.current().map(cur -> !cur.equals(fresh)).orElse(true)) {
             state.setCurrent(fresh);
@@ -100,13 +101,13 @@ public final class CompassTargetStateController {
         }
     }
 
-    private CompassTargetKind inferKindFromBlock(Minecraft client, BlockPos pos, ResourceKey<Level> dim) {
+    private SpawnBlockKind inferKindFromBlock(Minecraft client, BlockPos pos, ResourceKey<Level> dim) {
         if (client.level != null && client.level.dimension().equals(dim)) {
             var block = client.level.getBlockState(pos).getBlock();
-            if (block instanceof RespawnAnchorBlock) return CompassTargetKind.RESPAWN_ANCHOR;
-            if (block instanceof BedBlock) return CompassTargetKind.BED;
+            if (block instanceof RespawnAnchorBlock) return SpawnBlockKind.RESPAWN_ANCHOR;
+            if (block instanceof BedBlock) return SpawnBlockKind.BED;
         }
-        return state.current().map(CompassTargetRecord::kind).orElse(CompassTargetKind.BED);
+        return state.current().map(CompassTargetRecord::kind).orElse(SpawnBlockKind.BED);
     }
 
     private void verifyDestroyedOnChunkLoad(ClientLevel world, ChunkPos cp) {

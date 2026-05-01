@@ -1,5 +1,6 @@
 package dev.handy.mods.handyspawn.state;
 
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -24,7 +25,7 @@ class CompassTargetStateTest {
     @Test
     void setCurrentStoresRecord() {
         CompassTargetState s = new CompassTargetState();
-        CompassTargetRecord r = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
+        CompassTargetRecord r = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnBlockKind.BED);
         s.setCurrent(r);
         assertEquals(r, s.current().orElseThrow());
     }
@@ -32,7 +33,7 @@ class CompassTargetStateTest {
     @Test
     void clearingCurrentWhilePreviousExistedRecordsDestroyed() {
         CompassTargetState s = new CompassTargetState();
-        CompassTargetRecord old = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
+        CompassTargetRecord old = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnBlockKind.BED);
         s.setCurrent(old);
         s.clearCurrent();
         assertTrue(s.current().isEmpty());
@@ -42,8 +43,8 @@ class CompassTargetStateTest {
     @Test
     void newSpawnClearsDestroyed() {
         CompassTargetState s = new CompassTargetState();
-        CompassTargetRecord old = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
-        CompassTargetRecord fresh = CompassTargetRecord.of(new BlockPos(5, 64, 7), OVERWORLD, CompassTargetKind.BED);
+        CompassTargetRecord old = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnBlockKind.BED);
+        CompassTargetRecord fresh = CompassTargetRecord.of(new BlockPos(5, 64, 7), OVERWORLD, SpawnBlockKind.BED);
         s.setCurrent(old);
         s.clearCurrent();
         s.setCurrent(fresh);
@@ -54,7 +55,7 @@ class CompassTargetStateTest {
     @Test
     void settingIdenticalRecordDoesNotCreateDestroyedMarker() {
         CompassTargetState s = new CompassTargetState();
-        CompassTargetRecord r = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, CompassTargetKind.BED);
+        CompassTargetRecord r = CompassTargetRecord.of(new BlockPos(1, 64, 2), OVERWORLD, SpawnBlockKind.BED);
         s.setCurrent(r);
         s.setCurrent(r);
         assertTrue(s.destroyedAt().isEmpty());

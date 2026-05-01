@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.state;
 
-import dev.handy.mods.handyspawn.net.PersonalSpawnKind;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -21,7 +21,7 @@ import java.util.Optional;
  */
 public final class PersonalSpawnState {
 
-    public record Record(BlockPos pos, ResourceKey<Level> dimension, PersonalSpawnKind kind) {}
+    public record Record(BlockPos pos, ResourceKey<Level> dimension, SpawnBlockKind kind) {}
 
     private Record current;
     private Record destroyed;
@@ -35,7 +35,7 @@ public final class PersonalSpawnState {
     }
 
     public void applyPayload(Optional<BlockPos> pos, Optional<ResourceKey<Level>> dim,
-                             PersonalSpawnKind kind, boolean isDestroyed) {
+                             SpawnBlockKind kind, boolean isDestroyed) {
         if (isDestroyed && pos.isPresent() && dim.isPresent()) {
             destroyed = new Record(pos.get(), dim.get(), kind);
             current = null;

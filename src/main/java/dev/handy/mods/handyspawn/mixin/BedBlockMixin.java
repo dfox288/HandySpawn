@@ -1,7 +1,7 @@
 package dev.handy.mods.handyspawn.mixin;
 
 import dev.handy.mods.handyspawn.HandySpawnConstants;
-import dev.handy.mods.handyspawn.net.PersonalSpawnKind;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import dev.handy.mods.handyspawn.server.SpawnBroadcaster;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -61,7 +61,7 @@ public abstract class BedBlockMixin {
             boolean hit = spawnPos.equals(pos) || spawnPos.equals(partnerPos);
             if (!hit) continue;
 
-            SpawnBroadcaster.broadcastDestroyed(p, spawnPos, data.dimension(), PersonalSpawnKind.BED);
+            SpawnBroadcaster.broadcastDestroyed(p, spawnPos, data.dimension(), SpawnBlockKind.BED);
             // Clear the respawn; our ServerPlayerMixin's null-guard skips the
             // redundant empty broadcast that would otherwise race with the
             // destroyed payload above.

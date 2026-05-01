@@ -1,6 +1,7 @@
 package dev.handy.mods.handyspawn.net;
 
 import dev.handy.mods.handyspawn.HandySpawnConstants;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -29,17 +30,17 @@ import java.util.Optional;
 public record PersonalSpawnPayload(
     Optional<BlockPos> pos,
     Optional<ResourceKey<Level>> dimension,
-    PersonalSpawnKind kind,
+    SpawnBlockKind kind,
     boolean isDestroyed
 ) implements CustomPacketPayload {
 
     public static final Type<PersonalSpawnPayload> ID =
         new Type<>(Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "personal_spawn"));
 
-    private static final StreamCodec<io.netty.buffer.ByteBuf, PersonalSpawnKind> KIND_CODEC =
+    private static final StreamCodec<io.netty.buffer.ByteBuf, SpawnBlockKind> KIND_CODEC =
         StreamCodec.of(
             (buf, v) -> buf.writeByte(v.ordinal()),
-            buf -> PersonalSpawnKind.values()[buf.readByte()]
+            buf -> SpawnBlockKind.values()[buf.readByte()]
         );
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PersonalSpawnPayload> CODEC =

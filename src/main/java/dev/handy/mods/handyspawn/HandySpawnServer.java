@@ -3,7 +3,7 @@ package dev.handy.mods.handyspawn;
 import dev.handy.mods.handyspawn.net.ForceloadSyncPayload;
 import dev.handy.mods.handyspawn.net.HandshakePayload;
 import dev.handy.mods.handyspawn.net.HandySpawnPayloads;
-import dev.handy.mods.handyspawn.net.PersonalSpawnKind;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import dev.handy.mods.handyspawn.server.SpawnBroadcaster;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.fabricmc.api.ModInitializer;
@@ -74,7 +74,7 @@ public final class HandySpawnServer implements ModInitializer {
                 if (!worldKey.equals(spawnDim)) continue;
                 if (!spawnPos.equals(pos)) continue;
 
-                SpawnBroadcaster.broadcastDestroyed(p, spawnPos, spawnDim, PersonalSpawnKind.RESPAWN_ANCHOR);
+                SpawnBroadcaster.broadcastDestroyed(p, spawnPos, spawnDim, SpawnBlockKind.RESPAWN_ANCHOR);
                 p.setRespawnPosition(null, false);
             }
         });

@@ -1,7 +1,7 @@
 package dev.handy.mods.handyspawn.server;
 
-import dev.handy.mods.handyspawn.net.PersonalSpawnKind;
 import dev.handy.mods.handyspawn.net.PersonalSpawnPayload;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -28,7 +28,7 @@ import java.util.Optional;
  *       the next bed interaction.</li>
  * </ul>
  * The broadcaster inspects the block at the stored position to tag the payload
- * as {@link PersonalSpawnKind#BED} or {@link PersonalSpawnKind#RESPAWN_ANCHOR};
+ * as {@link SpawnBlockKind#BED} or {@link SpawnBlockKind#RESPAWN_ANCHOR};
  * if the block has been replaced since the spawn was set, it falls back to
  * {@code BED}.
  */
@@ -47,7 +47,7 @@ public final class SpawnBroadcaster {
             ServerPlayNetworking.send(player, new PersonalSpawnPayload(
                 Optional.empty(),
                 Optional.empty(),
-                PersonalSpawnKind.BED,
+                SpawnBlockKind.BED,
                 false
             ));
             return;
@@ -55,7 +55,7 @@ public final class SpawnBroadcaster {
         LevelData.RespawnData data = rc.respawnData();
         BlockPos pos = data.pos();
         ResourceKey<Level> dim = data.dimension();
-        PersonalSpawnKind kind = inferKind(player.level().getServer(), pos, dim);
+        SpawnBlockKind kind = inferKind(player.level().getServer(), pos, dim);
         ServerPlayNetworking.send(player, new PersonalSpawnPayload(
             Optional.of(pos),
             Optional.of(dim),
@@ -72,7 +72,7 @@ public final class SpawnBroadcaster {
     public static void broadcastDestroyed(ServerPlayer player,
                                           BlockPos oldPos,
                                           ResourceKey<Level> oldDim,
-                                          PersonalSpawnKind oldKind) {
+                                          SpawnBlockKind oldKind) {
         ServerPlayNetworking.send(player, new PersonalSpawnPayload(
             Optional.of(oldPos),
             Optional.of(oldDim),
@@ -81,7 +81,7 @@ public final class SpawnBroadcaster {
         ));
     }
 
-    private static PersonalSpawnKind inferKind(MinecraftServer server,
+    private static SpawnBlockKind inferKind(MinecraftServer server,
                                                BlockPos pos,
                                                ResourceKey<Level> dim) {
         if (server != null) {
@@ -89,13 +89,13 @@ public final class SpawnBroadcaster {
             if (world != null) {
                 var block = world.getBlockState(pos).getBlock();
                 if (block instanceof RespawnAnchorBlock) {
-                    return PersonalSpawnKind.RESPAWN_ANCHOR;
+                    return SpawnBlockKind.RESPAWN_ANCHOR;
                 }
                 if (block instanceof BedBlock) {
-                    return PersonalSpawnKind.BED;
+                    return SpawnBlockKind.BED;
                 }
             }
         }
-        return PersonalSpawnKind.BED;
+        return SpawnBlockKind.BED;
     }
 }

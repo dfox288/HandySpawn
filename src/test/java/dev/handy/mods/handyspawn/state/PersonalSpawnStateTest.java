@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.state;
 
-import dev.handy.mods.handyspawn.net.PersonalSpawnKind;
+import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -28,12 +28,12 @@ class PersonalSpawnStateTest {
     void livePayloadPopulatesCurrentOnly() {
         PersonalSpawnState s = new PersonalSpawnState();
         BlockPos pos = new BlockPos(10, 64, -20);
-        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, false);
+        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.BED, false);
 
         PersonalSpawnState.Record cur = s.current().orElseThrow();
         assertEquals(pos, cur.pos());
         assertEquals(OVERWORLD, cur.dimension());
-        assertEquals(PersonalSpawnKind.BED, cur.kind());
+        assertEquals(SpawnBlockKind.BED, cur.kind());
         assertTrue(s.destroyedAt().isEmpty());
     }
 
@@ -41,12 +41,12 @@ class PersonalSpawnStateTest {
     void destroyedPayloadPopulatesDestroyedOnly() {
         PersonalSpawnState s = new PersonalSpawnState();
         BlockPos pos = new BlockPos(10, 64, -20);
-        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.RESPAWN_ANCHOR, true);
+        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.RESPAWN_ANCHOR, true);
 
         PersonalSpawnState.Record dest = s.destroyedAt().orElseThrow();
         assertEquals(pos, dest.pos());
         assertEquals(OVERWORLD, dest.dimension());
-        assertEquals(PersonalSpawnKind.RESPAWN_ANCHOR, dest.kind());
+        assertEquals(SpawnBlockKind.RESPAWN_ANCHOR, dest.kind());
         assertTrue(s.current().isEmpty());
     }
 
@@ -56,8 +56,8 @@ class PersonalSpawnStateTest {
         BlockPos a = new BlockPos(1, 64, 1);
         BlockPos b = new BlockPos(5, 64, 7);
 
-        s.applyPayload(Optional.of(a), Optional.of(OVERWORLD), PersonalSpawnKind.BED, false);
-        s.applyPayload(Optional.of(b), Optional.of(OVERWORLD), PersonalSpawnKind.BED, false);
+        s.applyPayload(Optional.of(a), Optional.of(OVERWORLD), SpawnBlockKind.BED, false);
+        s.applyPayload(Optional.of(b), Optional.of(OVERWORLD), SpawnBlockKind.BED, false);
 
         assertEquals(b, s.current().orElseThrow().pos());
         assertTrue(s.destroyedAt().isEmpty());
@@ -67,9 +67,9 @@ class PersonalSpawnStateTest {
     void emptyPayloadClearsCurrent() {
         PersonalSpawnState s = new PersonalSpawnState();
         BlockPos pos = new BlockPos(1, 64, 1);
-        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, false);
+        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.BED, false);
 
-        s.applyPayload(Optional.empty(), Optional.empty(), PersonalSpawnKind.BED, false);
+        s.applyPayload(Optional.empty(), Optional.empty(), SpawnBlockKind.BED, false);
 
         assertTrue(s.current().isEmpty());
         assertTrue(s.destroyedAt().isEmpty());
@@ -83,9 +83,9 @@ class PersonalSpawnStateTest {
         // destroyed record, otherwise the ghost marker never renders.
         PersonalSpawnState s = new PersonalSpawnState();
         BlockPos pos = new BlockPos(1, 64, 1);
-        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, true);
+        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.BED, true);
 
-        s.applyPayload(Optional.empty(), Optional.empty(), PersonalSpawnKind.BED, false);
+        s.applyPayload(Optional.empty(), Optional.empty(), SpawnBlockKind.BED, false);
 
         assertTrue(s.current().isEmpty());
         PersonalSpawnState.Record dest = s.destroyedAt().orElseThrow();
@@ -98,8 +98,8 @@ class PersonalSpawnStateTest {
         BlockPos oldPos = new BlockPos(1, 64, 1);
         BlockPos freshPos = new BlockPos(5, 64, 7);
 
-        s.applyPayload(Optional.of(oldPos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, true);
-        s.applyPayload(Optional.of(freshPos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, false);
+        s.applyPayload(Optional.of(oldPos), Optional.of(OVERWORLD), SpawnBlockKind.BED, true);
+        s.applyPayload(Optional.of(freshPos), Optional.of(OVERWORLD), SpawnBlockKind.BED, false);
 
         assertEquals(freshPos, s.current().orElseThrow().pos());
         assertTrue(s.destroyedAt().isEmpty());
@@ -109,7 +109,7 @@ class PersonalSpawnStateTest {
     void clearEmptiesBothSlots() {
         PersonalSpawnState s = new PersonalSpawnState();
         BlockPos pos = new BlockPos(1, 64, 1);
-        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), PersonalSpawnKind.BED, true);
+        s.applyPayload(Optional.of(pos), Optional.of(OVERWORLD), SpawnBlockKind.BED, true);
 
         s.clear();
 
