@@ -1,6 +1,7 @@
 package dev.handy.mods.handyspawn.state;
 
 import com.google.gson.Gson;
+import dev.handy.mods.handyspawn.HandySpawnConstants;
 import dev.handy.mods.handyspawn.spawn.SpawnBlockKind;
 import com.google.gson.GsonBuilder;
 import net.minecraft.core.BlockPos;
@@ -49,6 +50,7 @@ public final class CompassTargetPersistence {
                 Optional.ofNullable(dto.destroyed()).map(CompassTargetPersistence::toRecord)
             );
         } catch (IOException | RuntimeException e) {
+            HandySpawnConstants.LOGGER.debug("Failed to read compass-target snapshot for worldId={}", worldId, e);
             return new Snapshot(Optional.empty(), Optional.empty());
         }
     }
@@ -62,8 +64,9 @@ public final class CompassTargetPersistence {
                 snap.destroyed().map(CompassTargetPersistence::toEntry).orElse(null)
             );
             Files.writeString(file, GSON.toJson(dto), StandardCharsets.UTF_8);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             // Persistence failure is non-fatal; state remains in memory.
+            HandySpawnConstants.LOGGER.warn("Failed to write compass-target snapshot for worldId={}", worldId, e);
         }
     }
 
