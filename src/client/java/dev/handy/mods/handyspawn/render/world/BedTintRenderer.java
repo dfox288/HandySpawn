@@ -10,6 +10,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * F2 feature: float a small "Zzz" billboard above every bed within
  * {@link #SCAN_RADIUS} blocks of the player, but only when sleep would actually
@@ -28,9 +31,11 @@ import net.minecraft.world.phys.Vec3;
  * positioned at the geometric midpoint between HEAD and FOOT so the billboard
  * hovers over the bed rather than one half.
  *
- * <p>Per-frame iteration over ~17k positions (32×32×9) is tolerable for a
- * single player. If profiling shows cost, a cached scan that refreshes every
- * ~20 ticks would be the next step.
+ * <p>The 32×32×9 box scan would touch ~9k positions per frame, so the result
+ * is cached and refreshed only when the player drifts past
+ * {@link #REBUILD_DISTANCE_BLOCKS} or every {@link #REBUILD_INTERVAL_MS}
+ * (whichever fires first). Within a refresh window the per-frame cost
+ * collapses to O(beds-in-radius), which is what actually drives draws.
  */
 public final class BedTintRenderer {
 
@@ -53,6 +58,17 @@ public final class BedTintRenderer {
     /** Vertical scan radius in blocks from the player (beds on nearby floors). */
     private static final int VERTICAL_RADIUS = 4;
 
+    /** Distance the player can drift before the cached bed list is rebuilt. */
+    private static final double REBUILD_DISTANCE_BLOCKS = 4.0;
+
+    /** Time-based rebuild floor; catches placed/broken beds without a tick hook. */
+    private static final long REBUILD_INTERVAL_MS = 500L;
+
+    private static List<Vec3> cachedBedCentres = List.of();
+    private static Level cachedLevel;
+    private static BlockPos cachedScanCenter;
+    private static long cachedScanAtMs;
+
     public static void render(RenderContext ctx) {
         if (!HandySpawnConfig.get().sleepReadinessTint) return;
         Minecraft mc = Minecraft.getInstance();
@@ -67,11 +83,31 @@ public final class BedTintRenderer {
         float pulse = 0.5f + 0.5f * (float) Math.sin(phase * 2 * Math.PI);
         float alpha = PULSE_MIN_ALPHA + (PULSE_MAX_ALPHA - PULSE_MIN_ALPHA) * pulse;
 
-        BlockPos center = mc.player.blockPosition();
-        BlockPos from = center.offset(-SCAN_RADIUS, -VERTICAL_RADIUS, -SCAN_RADIUS);
-        BlockPos to = center.offset(SCAN_RADIUS, VERTICAL_RADIUS, SCAN_RADIUS);
+        List<Vec3> centres = bedCentresFor(w, mc.player.blockPosition());
+        for (Vec3 centre : centres) {
+            RenderPrimitives.billboardGlyph(ctx, centre, GLYPH, ICON_SIZE, COLOR_RGB, alpha, false);
+        }
+    }
+
+    /**
+     * Returns cached bed centres if the cache is still warm; otherwise rescans
+     * the radius around {@code playerPos} and caches the result. Cache is
+     * invalidated by level change, player drift past
+     * {@link #REBUILD_DISTANCE_BLOCKS}, or {@link #REBUILD_INTERVAL_MS} elapsed.
+     */
+    private static List<Vec3> bedCentresFor(Level level, BlockPos playerPos) {
+        long now = System.currentTimeMillis();
+        boolean stale = cachedLevel != level
+            || cachedScanCenter == null
+            || now - cachedScanAtMs > REBUILD_INTERVAL_MS
+            || playerPos.distSqr(cachedScanCenter) > REBUILD_DISTANCE_BLOCKS * REBUILD_DISTANCE_BLOCKS;
+        if (!stale) return cachedBedCentres;
+
+        BlockPos from = playerPos.offset(-SCAN_RADIUS, -VERTICAL_RADIUS, -SCAN_RADIUS);
+        BlockPos to = playerPos.offset(SCAN_RADIUS, VERTICAL_RADIUS, SCAN_RADIUS);
+        List<Vec3> fresh = new ArrayList<>();
         for (BlockPos pos : BlockPos.betweenClosed(from, to)) {
-            BlockState state = w.getBlockState(pos);
+            BlockState state = level.getBlockState(pos);
             if (!(state.getBlock() instanceof BedBlock)) continue;
             // Render once per bed: only when we hit the HEAD half. FOOT half
             // is skipped so we don't double-draw the same glyph.
@@ -81,13 +117,16 @@ public final class BedTintRenderer {
             // its FOOT partner, so adding half that step vector gives the
             // midpoint between the two halves.
             Direction toFoot = BedBlock.getConnectedDirection(state);
-            Vec3 bedCentre = new Vec3(
+            fresh.add(new Vec3(
                 pos.getX() + 0.5 + toFoot.getStepX() * 0.5,
                 pos.getY() + Y_OFFSET,
-                pos.getZ() + 0.5 + toFoot.getStepZ() * 0.5);
-
-            RenderPrimitives.billboardGlyph(ctx, bedCentre, GLYPH, ICON_SIZE, COLOR_RGB, alpha, false);
+                pos.getZ() + 0.5 + toFoot.getStepZ() * 0.5));
         }
+        cachedLevel = level;
+        cachedScanCenter = playerPos.immutable();
+        cachedScanAtMs = now;
+        cachedBedCentres = List.copyOf(fresh);
+        return cachedBedCentres;
     }
 
     private BedTintRenderer() {}
