@@ -35,7 +35,7 @@ public final class HandySpawnServer implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        HandySpawnConstants.LOG.info("HandySpawn server component initialising");
+        HandySpawnConstants.LOGGER.info("HandySpawn server component initialising");
         HandySpawnPayloads.registerAll();
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {

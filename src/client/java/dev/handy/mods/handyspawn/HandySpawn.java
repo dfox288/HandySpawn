@@ -64,7 +64,7 @@ public final class HandySpawn implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        HandySpawnConstants.LOG.info("HandySpawn initialising");
+        HandySpawnConstants.LOGGER.info("HandySpawn initialising");
         HandySpawnConfig.load();
 
         // Register payload types on the client side. The server calls this from
@@ -83,7 +83,7 @@ public final class HandySpawn implements ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(HandshakePayload.ID, (payload, ctx) -> {
             sessionState.onHandshakeReceived();
-            HandySpawnConstants.LOG.info("Server has HandySpawn installed");
+            HandySpawnConstants.LOGGER.info("Server has HandySpawn installed");
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PersonalSpawnPayload.ID, (payload, ctx) -> {
@@ -111,7 +111,7 @@ public final class HandySpawn implements ClientModInitializer {
 
         phantomTimer = PhantomTimer.create();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            sessionState.onTick(msg -> HandySpawnConstants.LOG.info(msg));
+            sessionState.onTick(msg -> HandySpawnConstants.LOGGER.info(msg));
             if (client.player == null || client.getConnection() == null) return;
             if (phantomTimer.shouldRequestStatsThisTick(STATS_POLL_INTERVAL_TICKS)) {
                 client.getConnection().send(
