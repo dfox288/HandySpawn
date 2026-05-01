@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0-beta.3
+
+### Fixed
+- `HandySpawnConfig` no longer crashes at startup when YACL is not installed; the mod now boots on in-memory defaults and picks up persisted settings the moment YACL is added.
+- Reset-to-default in the config screen now respects each option's real default; previously `forceloadBorderOverlay` flipped to `true` on reset.
+- Tightened `depends.minecraft` floor to `>=26.2-alpha.1` so the mod won't half-load on a 26.1 server (where the 26.2-only render APIs would crash at first frame).
+
+### Changed
+- Config moved from `<configDir>/handyspawn.json` to `<configDir>/handyspawn/config.json` to share one subdir with the spawn-state files. Existing `handyspawn.json` is migrated automatically on first launch.
+- `BedTintRenderer` (sleep-ready Zzz glyph) now caches its bed scan across frames, refreshing only when the player drifts >4 blocks or every 500 ms — much cheaper at high view distance.
+
 ## 0.3.0-beta.2
 
 ### Internal (no user-facing impact)
