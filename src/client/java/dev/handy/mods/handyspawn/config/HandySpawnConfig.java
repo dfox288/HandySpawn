@@ -8,7 +8,18 @@ import net.minecraft.resources.Identifier;
 
 import dev.handy.mods.handyspawn.HandySpawnConstants;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public final class HandySpawnConfig {
+
+    private static final Path CONFIG_PATH = FabricLoader.getInstance()
+        .getConfigDir().resolve(HandySpawnConstants.MOD_ID).resolve("config.json");
+    // Pre-2026-05 layout — flat <configDir>/handyspawn.json. Migrated once on first
+    // load so user settings carry over; safe to remove after a few releases.
+    private static final Path LEGACY_CONFIG_PATH = FabricLoader.getInstance()
+        .getConfigDir().resolve(HandySpawnConstants.MOD_ID + ".json");
 
     private static HandySpawnConfig INSTANCE;
 
@@ -40,6 +51,7 @@ public final class HandySpawnConfig {
     }
 
     public static void load() {
+        migrateLegacyConfigIfNeeded();
         if (yaclLoaded()) {
             YaclStorage.HANDLER.load();
             INSTANCE = YaclStorage.HANDLER.instance();
@@ -47,6 +59,22 @@ public final class HandySpawnConfig {
             // Without YACL the config screen can't be opened. Run with defaults; any
             // previously persisted config sits on disk and is picked up the moment YACL is installed.
             INSTANCE = new HandySpawnConfig();
+        }
+    }
+
+    private static void migrateLegacyConfigIfNeeded() {
+        if (Files.exists(CONFIG_PATH) || !Files.exists(LEGACY_CONFIG_PATH)) return;
+        try {
+            Files.createDirectories(CONFIG_PATH.getParent());
+            Files.move(LEGACY_CONFIG_PATH, CONFIG_PATH);
+            HandySpawnConstants.LOGGER.info(
+                "Migrated config from {} to {}/{}",
+                LEGACY_CONFIG_PATH.getFileName(),
+                CONFIG_PATH.getParent().getFileName(),
+                CONFIG_PATH.getFileName());
+        } catch (IOException e) {
+            HandySpawnConstants.LOGGER.warn(
+                "Failed to migrate legacy config from {}", LEGACY_CONFIG_PATH.getFileName(), e);
         }
     }
 
@@ -71,8 +99,7 @@ public final class HandySpawnConfig {
             ConfigClassHandler.createBuilder(HandySpawnConfig.class)
                 .id(Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "config"))
                 .serializer(cfg -> GsonConfigSerializerBuilder.create(cfg)
-                    .setPath(FabricLoader.getInstance().getConfigDir()
-                        .resolve(HandySpawnConstants.MOD_ID + ".json"))
+                    .setPath(CONFIG_PATH)
                     .build())
                 .build();
     }
