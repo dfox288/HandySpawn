@@ -87,11 +87,6 @@ public final class HandySpawn implements ClientModInitializer {
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PersonalSpawnPayload.ID, (payload, ctx) -> {
-            HandySpawnConstants.LOG.info(
-                "[rx] PersonalSpawnPayload pos={} dim={} kind={} destroyed={}",
-                payload.pos().map(Object::toString).orElse("empty"),
-                payload.dimension().map(d -> d.identifier().toString()).orElse("empty"),
-                payload.kind(), payload.isDestroyed());
             personalSpawnState.applyPayload(
                 payload.pos(), payload.dimension(), payload.kind(), payload.isDestroyed());
         });

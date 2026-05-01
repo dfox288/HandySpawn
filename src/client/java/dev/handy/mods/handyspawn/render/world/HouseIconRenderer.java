@@ -38,10 +38,6 @@ public final class HouseIconRenderer {
     /** World-space offset above the block so the icon hovers over the bed/anchor. */
     private static final double Y_OFFSET = 1.2;
 
-    // DIAG (bed-break HOME-persists bug): rate-limit per-frame render log.
-    private static int diagCounter = 0;
-    private static final int DIAG_EVERY_N = 60;
-
     public static void render(RenderContext ctx) {
         HandySpawnConfig cfg = HandySpawnConfig.get();
         if (!cfg.personalSpawnMarker) return;
@@ -49,34 +45,21 @@ public final class HouseIconRenderer {
 
         BlockPos pos;
         ResourceKey<Level> dim;
-        String source;
         if (HandySpawn.session().isServerSynced()) {
             var record = HandySpawn.personal().current().orElse(null);
             if (record == null) return;
             pos = record.pos();
             dim = record.dimension();
-            source = "personal";
         } else {
             var record = HandySpawn.compassTarget().state().current().orElse(null);
             if (record == null) return;
             pos = record.pos();
             dim = record.dimension();
-            source = "compassTarget";
-        }
-        // DIAG (bed-break HOME-persists bug): rate-limited log identifying
-        // which state source drives the render and the resolved pos.
-        if ((diagCounter++ % DIAG_EVERY_N) == 0) {
-            dev.handy.mods.handyspawn.HandySpawnConstants.LOG.info(
-                "[house] rendering HOME source={} pos={}", source, pos);
         }
         if (!dim.equals(ctx.level().dimension())) return;
 
         Vec3 above = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5 + Y_OFFSET, pos.getZ() + 0.5);
         RenderPrimitives.billboardGlyph(ctx, above, GLYPH, ICON_SIZE, COLOR_RGB, ICON_ALPHA, false);
-        // DEBUG (kept commented for future diagnosis): magenta chunk wireframe
-        // around the personal-spawn chunk — used while hunting the world-space
-        // text silent-render bug in v0.2.0.
-        // RenderPrimitives.chunkWireframe(ctx, pos.getX() >> 4, pos.getZ() >> 4, 0xFFFF00FF);
     }
 
     private HouseIconRenderer() {}

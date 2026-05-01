@@ -50,10 +50,6 @@ public abstract class BedBlockMixin {
         BlockPos partnerPos = pos.relative(BedBlock.getConnectedDirection(state));
         ResourceKey<Level> worldKey = serverLevel.dimension();
 
-        HandySpawnConstants.LOG.info(
-            "[bed-destroy] pos={} partner={} breaker={}",
-            pos, partnerPos, player.getName().getString());
-
         for (ServerPlayer p : serverLevel.getServer().getPlayerList().getPlayers()) {
             ServerPlayer.RespawnConfig rc = p.getRespawnConfig();
             if (rc == null) continue;
@@ -64,10 +60,6 @@ public abstract class BedBlockMixin {
 
             boolean hit = spawnPos.equals(pos) || spawnPos.equals(partnerPos);
             if (!hit) continue;
-
-            HandySpawnConstants.LOG.info(
-                "[bed-destroy] notifying player={} spawnPos={}",
-                p.getName().getString(), spawnPos);
 
             SpawnBroadcaster.broadcastDestroyed(p, spawnPos, data.dimension(), PersonalSpawnKind.BED);
             // Clear the respawn; our ServerPlayerMixin's null-guard skips the

@@ -52,14 +52,6 @@ public final class PersonalSpawnState {
             // (branch above) is what properly clears the destroyed slot.
             current = null;
         }
-        // DIAG (bed-break HOME-persists bug, 2026-04-19): log resulting state
-        // on every payload so we can correlate renderer observations with state.
-        dev.handy.mods.handyspawn.HandySpawnConstants.LOG.info(
-            "[apply] rx pos={} destroyed_flag={} => current={} destroyed={}",
-            pos.map(Object::toString).orElse("empty"),
-            isDestroyed,
-            current == null ? "null" : current.pos().toString(),
-            destroyed == null ? "null" : destroyed.pos().toString());
     }
 
     public void clear() {

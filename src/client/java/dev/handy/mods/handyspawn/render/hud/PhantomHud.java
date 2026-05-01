@@ -15,30 +15,11 @@ public final class PhantomHud {
     private static final Identifier ACTIVE =
         Identifier.fromNamespaceAndPath(HandySpawnConstants.MOD_ID, "textures/gui/icons/phantom_active.png");
 
-    /**
-     * DEBUG: when true, ignore the real {@code time_since_rest} stat and cycle
-     * SILENT → WARNING → ACTIVE every 5 seconds so the HUD states can be eyeballed
-     * without waiting an hour of real time. Set back to {@code false} before release.
-     */
-    private static final boolean DEBUG_CYCLE_PHASES = false;
-    private static final long DEBUG_CYCLE_PERIOD_MS = 5000L;
-
     public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
         HandySpawnConfig cfg = HandySpawnConfig.get();
         if (!cfg.phantomTimer) return y;
 
-        int t;
-        if (DEBUG_CYCLE_PHASES) {
-            long cycle = (System.currentTimeMillis() / DEBUG_CYCLE_PERIOD_MS) % 3L;
-            // 0 → SILENT, 1 → mid-way into WARNING, 2 → ACTIVE
-            t = cycle == 0
-                ? 0
-                : cycle == 1
-                    ? cfg.phantomWarningStartTick + (PhantomTimer.PHANTOM_THRESHOLD_TICKS - cfg.phantomWarningStartTick) / 2
-                    : PhantomTimer.PHANTOM_THRESHOLD_TICKS + 100;
-        } else {
-            t = HandySpawn.phantom().timeSinceRest();
-        }
+        int t = HandySpawn.phantom().timeSinceRest();
         PhantomTimer.Phase phase = PhantomTimer.phaseFor(t, cfg.phantomWarningStartTick);
         if (phase == PhantomTimer.Phase.SILENT) return y;
 
