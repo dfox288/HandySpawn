@@ -58,6 +58,8 @@ processResources {
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
+
+	exclude '**/CLAUDE.md'
 }
 
 tasks.withType(JavaCompile).configureEach {
