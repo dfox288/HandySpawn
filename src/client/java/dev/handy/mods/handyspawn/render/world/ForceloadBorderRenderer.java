@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.world;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -40,7 +40,7 @@ public final class ForceloadBorderRenderer {
         if (!HandySpawnConfig.get().forceloadBorderOverlay) return;
         if (ctx.level() == null) return;
 
-        LongSet chunks = HandySpawn.forceload().forceloadedChunks(ctx.level().dimension());
+        LongSet chunks = HandySpawnClient.forceload().forceloadedChunks(ctx.level().dimension());
         if (chunks.isEmpty()) return;
 
         // "Inside" means the camera's chunk is itself force-loaded. Using

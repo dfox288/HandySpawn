@@ -18,7 +18,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.stats.Stats;
 
-public final class HandySpawn implements ClientModInitializer {
+public final class HandySpawnClient implements ClientModInitializer {
 
     /** Poll the server for stats roughly every 10 seconds (200 ticks @ 20tps). */
     private static final int STATS_POLL_INTERVAL_TICKS = 200;
@@ -46,7 +46,7 @@ public final class HandySpawn implements ClientModInitializer {
      */
     public static Context context() {
         Context c = CONTEXT;
-        if (c == null) throw new IllegalStateException("HandySpawn.context() accessed before onInitializeClient");
+        if (c == null) throw new IllegalStateException("HandySpawnClient.context() accessed before onInitializeClient");
         return c;
     }
 
@@ -85,7 +85,7 @@ public final class HandySpawn implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        HandySpawnConstants.LOGGER.info("HandySpawn initialising");
+        HandySpawnConstants.LOGGER.info("HandySpawn client initialising");
         HandySpawnConfig.load();
 
         // Phase 1: construct all state up front, so every accessor below

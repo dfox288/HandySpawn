@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.hud;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.HandySpawnConstants;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import net.minecraft.client.Minecraft;
@@ -30,7 +30,7 @@ public final class ForceloadHud {
         if (mc.player == null || mc.level == null) return y;
 
         ChunkPos here = ChunkPos.containing(mc.player.blockPosition());
-        if (!HandySpawn.forceload().containsChunk(mc.level.dimension(), here)) return y;
+        if (!HandySpawnClient.forceload().containsChunk(mc.level.dimension(), here)) return y;
 
         // Icon on the right edge, text label to its left so the whole row
         // reads as "FORCELOADED [icon]" aligned to the rail's right edge.

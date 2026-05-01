@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.world;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -41,13 +41,13 @@ public final class GhostMarkerRenderer {
 
         BlockPos pos;
         ResourceKey<Level> dim;
-        if (HandySpawn.session().isServerSynced()) {
-            var rec = HandySpawn.personal().destroyedAt().orElse(null);
+        if (HandySpawnClient.session().isServerSynced()) {
+            var rec = HandySpawnClient.personal().destroyedAt().orElse(null);
             if (rec == null) return;
             pos = rec.pos();
             dim = rec.dimension();
         } else {
-            var rec = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
+            var rec = HandySpawnClient.compassTarget().state().destroyedAt().orElse(null);
             if (rec == null) return;
             pos = rec.pos();
             dim = rec.dimension();

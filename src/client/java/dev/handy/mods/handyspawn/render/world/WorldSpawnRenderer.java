@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.world;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import dev.handy.mods.handyspawn.state.CompassTargetRecord;
 import net.minecraft.core.BlockPos;
@@ -48,7 +48,7 @@ public final class WorldSpawnRenderer {
         if (ctx.level() == null) return;
         if (!ctx.level().dimension().equals(Level.OVERWORLD)) return;
 
-        CompassTargetRecord rec = HandySpawn.compassTarget().state().current().orElse(null);
+        CompassTargetRecord rec = HandySpawnClient.compassTarget().state().current().orElse(null);
         if (rec == null) return;
         if (!rec.dimension().equals(Level.OVERWORLD)) return;
 

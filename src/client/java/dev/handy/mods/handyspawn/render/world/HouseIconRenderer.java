@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.world;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -45,13 +45,13 @@ public final class HouseIconRenderer {
 
         BlockPos pos;
         ResourceKey<Level> dim;
-        if (HandySpawn.session().isServerSynced()) {
-            var record = HandySpawn.personal().current().orElse(null);
+        if (HandySpawnClient.session().isServerSynced()) {
+            var record = HandySpawnClient.personal().current().orElse(null);
             if (record == null) return;
             pos = record.pos();
             dim = record.dimension();
         } else {
-            var record = HandySpawn.compassTarget().state().current().orElse(null);
+            var record = HandySpawnClient.compassTarget().state().current().orElse(null);
             if (record == null) return;
             pos = record.pos();
             dim = record.dimension();

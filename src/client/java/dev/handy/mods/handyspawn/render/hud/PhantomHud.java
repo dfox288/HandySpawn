@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.hud;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.HandySpawnConstants;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import dev.handy.mods.handyspawn.state.PhantomTimer;
@@ -19,7 +19,7 @@ public final class PhantomHud {
         HandySpawnConfig cfg = HandySpawnConfig.get();
         if (!cfg.phantomTimer) return y;
 
-        int t = HandySpawn.phantom().timeSinceRest();
+        int t = HandySpawnClient.phantom().timeSinceRest();
         PhantomTimer.Phase phase = PhantomTimer.phaseFor(t, cfg.phantomWarningStartTick);
         if (phase == PhantomTimer.Phase.SILENT) return y;
 

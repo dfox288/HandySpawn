@@ -1,6 +1,6 @@
 package dev.handy.mods.handyspawn.render.hud;
 
-import dev.handy.mods.handyspawn.HandySpawn;
+import dev.handy.mods.handyspawn.HandySpawnClient;
 import dev.handy.mods.handyspawn.config.HandySpawnConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -23,16 +23,16 @@ public final class CrossDimHud {
         boolean hasCurrent;
         ResourceKey<Level> dim;
         net.minecraft.core.BlockPos pos;
-        if (HandySpawn.session().isServerSynced()) {
-            var current = HandySpawn.personal().current().orElse(null);
-            var destroyed = HandySpawn.personal().destroyedAt().orElse(null);
+        if (HandySpawnClient.session().isServerSynced()) {
+            var current = HandySpawnClient.personal().current().orElse(null);
+            var destroyed = HandySpawnClient.personal().destroyedAt().orElse(null);
             if (current == null && destroyed == null) return y;
             hasCurrent = current != null;
             dim = hasCurrent ? current.dimension() : destroyed.dimension();
             pos = hasCurrent ? current.pos() : destroyed.pos();
         } else {
-            var current = HandySpawn.compassTarget().state().current().orElse(null);
-            var destroyed = HandySpawn.compassTarget().state().destroyedAt().orElse(null);
+            var current = HandySpawnClient.compassTarget().state().current().orElse(null);
+            var destroyed = HandySpawnClient.compassTarget().state().destroyedAt().orElse(null);
             if (current == null && destroyed == null) return y;
             hasCurrent = current != null;
             dim = hasCurrent ? current.dimension() : destroyed.dimension();

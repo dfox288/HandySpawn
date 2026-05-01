@@ -18,7 +18,7 @@
             "dev.handy.mods.handyspawn.HandySpawnServer"
         ],
         "client": [
-            "dev.handy.mods.handyspawn.HandySpawn"
+            "dev.handy.mods.handyspawn.HandySpawnClient"
         ],
         "modmenu": [
             "dev.handy.mods.handyspawn.compat.ModMenuIntegration"
