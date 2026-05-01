@@ -56,7 +56,7 @@ public final class BedTintRenderer {
     public static void render(RenderContext ctx) {
         if (!HandySpawnConfig.get().sleepReadinessTint) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.player == null || ctx.level() == null) return;
+        if (mc.player == null || ctx.level() == null) return;
         Level w = ctx.level();
 
         boolean sleepable = w.isDarkOutside() || w.isThundering();

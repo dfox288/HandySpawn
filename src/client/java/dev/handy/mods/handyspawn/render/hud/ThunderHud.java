@@ -15,7 +15,7 @@ public final class ThunderHud {
     public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
         if (!HandySpawnConfig.get().daytimeThunderstormHint) return y;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.level == null) return y;
+        if (mc.level == null) return y;
         Level w = mc.level;
 
         // Only surface when daytime AND thundering — the non-obvious sleep window.

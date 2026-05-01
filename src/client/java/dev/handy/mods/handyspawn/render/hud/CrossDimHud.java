@@ -18,7 +18,7 @@ public final class CrossDimHud {
     public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
         if (!HandySpawnConfig.get().crossDimensionReadout) return y;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.level == null) return y;
+        if (mc.level == null) return y;
 
         boolean hasCurrent;
         ResourceKey<Level> dim;

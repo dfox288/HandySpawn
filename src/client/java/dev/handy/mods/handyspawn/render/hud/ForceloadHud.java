@@ -27,7 +27,7 @@ public final class ForceloadHud {
     public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
         if (!HandySpawnConfig.get().forceloadBadge) return y;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.player == null || mc.level == null) return y;
+        if (mc.player == null || mc.level == null) return y;
 
         ChunkPos here = ChunkPos.containing(mc.player.blockPosition());
         if (!HandySpawn.forceload().containsChunk(mc.level.dimension(), here)) return y;

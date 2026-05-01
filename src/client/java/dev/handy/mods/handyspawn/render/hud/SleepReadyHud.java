@@ -25,7 +25,7 @@ public final class SleepReadyHud {
     public static int renderRight(GuiGraphicsExtractor ctx, int rightEdgeX, int y) {
         if (!HandySpawnConfig.get().sleepReadinessTint) return y;
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.level == null) return y;
+        if (mc.level == null) return y;
         Level w = mc.level;
 
         boolean night = w.isDarkOutside();
