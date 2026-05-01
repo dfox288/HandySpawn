@@ -55,9 +55,6 @@ public final class WorldSpawnRenderer {
         BlockPos spawn = rec.pos();
         Vec3 above = new Vec3(spawn.getX() + 0.5, spawn.getY() + 0.5 + Y_OFFSET, spawn.getZ() + 0.5);
         RenderPrimitives.billboardGlyph(ctx, above, GLYPH, ICON_SIZE, COLOR_RGB, ICON_ALPHA, false);
-        // DEBUG (kept commented for future diagnosis): cyan chunk wireframe
-        // around the world-spawn chunk.
-        // RenderPrimitives.chunkWireframe(ctx, spawn.getX() >> 4, spawn.getZ() >> 4, 0xFF00FFFF);
     }
 
     private WorldSpawnRenderer() {}
