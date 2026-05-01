@@ -23,11 +23,32 @@ public final class HandySpawn implements ClientModInitializer {
     /** Poll the server for stats roughly every 10 seconds (200 ticks @ 20tps). */
     private static final int STATS_POLL_INTERVAL_TICKS = 200;
 
-    private static CompassTargetStateController compassTargetController;
-    private static PhantomTimer phantomTimer;
-    private static PersonalSpawnState personalSpawnState;
-    private static SharedForceloadState forceloadState;
-    private static SessionState sessionState;
+    /**
+     * Aggregates the five long-lived per-mod state objects so they can all be
+     * constructed up front and exposed through a single immutable handle.
+     * Built once in {@link #onInitializeClient()} before any event handler is
+     * registered, so accessors below never need to null-check.
+     */
+    public record Context(
+        CompassTargetStateController compassTarget,
+        PhantomTimer phantom,
+        PersonalSpawnState personal,
+        SharedForceloadState forceload,
+        SessionState session
+    ) {}
+
+    private static volatile Context CONTEXT;
+
+    /**
+     * Returns the live context. Throws if accessed before {@link #onInitializeClient()}
+     * has run, which would indicate a startup-ordering bug rather than a legitimate
+     * runtime state.
+     */
+    public static Context context() {
+        Context c = CONTEXT;
+        if (c == null) throw new IllegalStateException("HandySpawn.context() accessed before onInitializeClient");
+        return c;
+    }
 
     /**
      * Access the tracked compass-target state. This is the global compass
@@ -37,19 +58,19 @@ public final class HandySpawn implements ClientModInitializer {
      * {@code PersonalSpawnPayload} separately.
      */
     public static CompassTargetStateController compassTarget() {
-        return compassTargetController;
+        return context().compassTarget();
     }
 
     public static PhantomTimer phantom() {
-        return phantomTimer;
+        return context().phantom();
     }
 
     public static SharedForceloadState forceload() {
-        return forceloadState;
+        return context().forceload();
     }
 
     public static PersonalSpawnState personal() {
-        return personalSpawnState;
+        return context().personal();
     }
 
     /**
@@ -59,7 +80,7 @@ public final class HandySpawn implements ClientModInitializer {
      * fallback.
      */
     public static SessionState session() {
-        return sessionState;
+        return context().session();
     }
 
     @Override
@@ -67,59 +88,65 @@ public final class HandySpawn implements ClientModInitializer {
         HandySpawnConstants.LOGGER.info("HandySpawn initialising");
         HandySpawnConfig.load();
 
+        // Phase 1: construct all state up front, so every accessor below
+        // is non-null by the time any registered handler can fire.
+        var dir = FabricLoader.getInstance().getConfigDir()
+            .resolve(HandySpawnConstants.MOD_ID).resolve("spawns");
+        Context ctx = new Context(
+            new CompassTargetStateController(dir),
+            PhantomTimer.create(),
+            new PersonalSpawnState(),
+            new SharedForceloadState(),
+            new SessionState()
+        );
+        CONTEXT = ctx;
+
+        // Phase 2: wire events. CompassTargetStateController registers its own
+        // JOIN/DISCONNECT/tick/chunk-load handlers from `register()`.
         // Register payload types on the client side. The server calls this from
         // its own initializer; the underlying Fabric registry is keyed by payload
         // ID and deduplicates, so running it on both sides is safe and necessary.
         HandySpawnPayloads.registerAll();
+        ctx.compassTarget().register();
 
-        var dir = FabricLoader.getInstance().getConfigDir()
-            .resolve(HandySpawnConstants.MOD_ID).resolve("spawns");
-        compassTargetController = new CompassTargetStateController(dir);
-        compassTargetController.register();
-
-        personalSpawnState = new PersonalSpawnState();
-        forceloadState = new SharedForceloadState();
-        sessionState = new SessionState();
-
-        ClientPlayNetworking.registerGlobalReceiver(HandshakePayload.ID, (payload, ctx) -> {
-            sessionState.onHandshakeReceived();
+        ClientPlayNetworking.registerGlobalReceiver(HandshakePayload.ID, (payload, c) -> {
+            ctx.session().onHandshakeReceived();
             HandySpawnConstants.LOGGER.info("Server has HandySpawn installed");
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(PersonalSpawnPayload.ID, (payload, ctx) -> {
-            personalSpawnState.applyPayload(
+        ClientPlayNetworking.registerGlobalReceiver(PersonalSpawnPayload.ID, (payload, c) -> {
+            ctx.personal().applyPayload(
                 payload.pos(), payload.dimension(), payload.kind(), payload.isDestroyed());
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(ForceloadSyncPayload.ID, (payload, ctx) -> {
-            forceloadState.update(payload.dimension(), payload.packedChunks());
+        ClientPlayNetworking.registerGlobalReceiver(ForceloadSyncPayload.ID, (payload, c) -> {
+            ctx.forceload().update(payload.dimension(), payload.packedChunks());
         });
 
         // Mark the session as started on join; CompassTargetStateController
         // registers its own JOIN handler to load the persisted compass target.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            sessionState.onJoin();
+            ctx.session().onJoin();
         });
 
         // Clear transient per-connection state on disconnect so a later join
         // doesn't inherit the previous server's spawns or forceloaded chunks.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            sessionState.onDisconnect();
-            personalSpawnState.clear();
-            forceloadState.clear();
+            ctx.session().onDisconnect();
+            ctx.personal().clear();
+            ctx.forceload().clear();
         });
 
-        phantomTimer = PhantomTimer.create();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            sessionState.onTick(msg -> HandySpawnConstants.LOGGER.info(msg));
+            ctx.session().onTick(msg -> HandySpawnConstants.LOGGER.info(msg));
             if (client.player == null || client.getConnection() == null) return;
-            if (phantomTimer.shouldRequestStatsThisTick(STATS_POLL_INTERVAL_TICKS)) {
+            if (ctx.phantom().shouldRequestStatsThisTick(STATS_POLL_INTERVAL_TICKS)) {
                 client.getConnection().send(
                     new ServerboundClientCommandPacket(
                         ServerboundClientCommandPacket.Action.REQUEST_STATS));
             }
             int value = client.player.getStats().getValue(Stats.CUSTOM, Stats.TIME_SINCE_REST);
-            phantomTimer.updateFromStats(value);
+            ctx.phantom().updateFromStats(value);
         });
 
         // World-space rendering uses Fabric's LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN
