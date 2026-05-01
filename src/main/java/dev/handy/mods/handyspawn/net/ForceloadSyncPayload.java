@@ -9,6 +9,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+import java.util.Arrays;
+
 /**
  * S2C payload syncing the full set of force-loaded chunks for one dimension.
  * Chunks are packed as {@code ChunkPos.toLong()} longs.
@@ -44,5 +46,21 @@ public record ForceloadSyncPayload(
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return ID;
+    }
+
+    // Override the record's default equals/hashCode: `long[]` falls back to identity
+    // comparison, so two payloads with the same contents would otherwise compare
+    // unequal. Forceload state diffing relies on content equality.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ForceloadSyncPayload other)) return false;
+        return dimension.equals(other.dimension)
+            && Arrays.equals(packedChunks, other.packedChunks);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * dimension.hashCode() + Arrays.hashCode(packedChunks);
     }
 }
