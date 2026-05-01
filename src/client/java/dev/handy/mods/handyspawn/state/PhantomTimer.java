@@ -16,6 +16,8 @@ package dev.handy.mods.handyspawn.state;
  */
 public final class PhantomTimer {
 
+    public static final int TICKS_PER_SECOND = 20;
+    public static final int TICKS_PER_MINUTE = 60 * TICKS_PER_SECOND;
     public static final int PHANTOM_THRESHOLD_TICKS = 72000;
 
     public enum Phase { SILENT, WARNING, ACTIVE }

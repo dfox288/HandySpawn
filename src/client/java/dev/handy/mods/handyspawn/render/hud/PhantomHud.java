@@ -30,7 +30,9 @@ public final class PhantomHud {
         Identifier icon;
         if (phase == PhantomTimer.Phase.WARNING) {
             int remaining = PhantomTimer.ticksRemainingUntilActive(t);
-            label = String.format("%d:%02d", remaining / 1200, (remaining % 1200) / 20);
+            int minutes = remaining / PhantomTimer.TICKS_PER_MINUTE;
+            int seconds = (remaining % PhantomTimer.TICKS_PER_MINUTE) / PhantomTimer.TICKS_PER_SECOND;
+            label = String.format("%d:%02d", minutes, seconds);
             textColour = 0xFFFFD040;
             icon = WARN;
         } else {
