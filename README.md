@@ -39,10 +39,10 @@ Jar appears under `build/libs/`.
 
 ## Dependencies
 
-- Minecraft 26.1.2 + Fabric Loader 0.19.2
-- Fabric API 0.146.1+26.1.2
-- YACL 3.9.2+26.1-fabric (optional, for the config screen)
-- ModMenu 18.0.0-alpha.8 (optional, for the config screen entry)
+- Minecraft 26.2-pre-1 + Fabric Loader 0.19.2
+- Fabric API 0.149.2+26.2
+- YACL 3.9.3+26.2-fabric (optional, for the config screen)
+- ModMenu 19.0.0-alpha.1 (optional, for the config screen entry)
 - Java 25
 
 ## License
