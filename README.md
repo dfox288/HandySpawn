@@ -2,7 +2,7 @@
 
 Surfaces Minecraft's hidden spawn-related information — personal spawn markers, phantom insomnia countdown, daytime-thunderstorm sleep hint, destroyed-spawn ghost marker, world-spawn marker, and forceloaded-chunk indicators.
 
-Client+server Fabric mod, currently tracking **Minecraft 26.2-pre-1**. Install on both sides for full features. Vanilla servers fall back gracefully — the client continues to track world spawn and keeps the phantom / thunder / world-spawn features working.
+Client+server Fabric mod for **Minecraft 26.2**. Install on both sides for full features. Vanilla servers fall back gracefully — the client continues to track world spawn and keeps the phantom / thunder / world-spawn features working.
 
 ## Features
 
@@ -27,7 +27,7 @@ All toggleable via ModMenu → HandySpawn → Settings.
 
 ## Install
 
-One jar, works on both sides. Drop `handyspawn-0.3.0-beta.4.jar` in the `mods/` folder of your client AND your server. For singleplayer, the client install is enough (the integrated server runs the server component automatically).
+One jar, works on both sides. Drop `handyspawn-0.3.0.jar` in the `mods/` folder of your client AND your server. For singleplayer, the client install is enough (the integrated server runs the server component automatically).
 
 ## Build
 
@@ -39,10 +39,10 @@ Jar appears under `build/libs/`.
 
 ## Dependencies
 
-- Minecraft 26.2-pre-1 + Fabric Loader 0.19.2
-- Fabric API 0.149.2+26.2
-- YACL 3.9.3+26.2-fabric (optional, for the config screen)
-- ModMenu 19.0.0-alpha.1 (optional, for the config screen entry)
+- Minecraft 26.2 + Fabric Loader 0.19.3
+- Fabric API 0.152.1+26.2
+- YACL 3.9.4+26.2-fabric (optional, for the config screen)
+- ModMenu 20.0.0-beta.2 (optional, for the config screen entry)
 - Java 25
 
 ## License
